@@ -5,6 +5,7 @@ import { COOKIE_NAME } from "@/app/lib/auth/cookies";
 import { verifyJwt } from "@/app/lib/auth/jwt";
 import { UserService } from "@/app/services/user.service";
 
+
 export async function GET() {
   try {
     await connectDB();

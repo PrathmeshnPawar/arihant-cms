@@ -1,29 +1,42 @@
-import mongoose, { Schema, model, models } from "mongoose";
+import mongoose, { Schema, models, model } from "mongoose";
 
-export type UserRole = "admin" | "editor";
+export type UserRole = "admin" | "manager";
 
 const UserSchema = new Schema(
   {
-    name: { type: String, required: true },
-    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    name: { type: String, required: true, trim: true },
 
-    // store hashed password only
-    password: { type: String, required: true },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+      index: true,
+    },
 
-    role: { type: String, enum: ["admin", "editor"], default: "editor" },
+    // ✅ hidden by default (must select("+password") explicitly)
+    password: { type: String, required: true, select: false },
+
+    role: {
+      type: String,
+      enum: ["admin", "manager"],
+      default: "admin",
+      required: true,
+    },
+
     isActive: { type: Boolean, default: true },
-
-    lastLoginAt: { type: Date },
   },
   { timestamps: true }
 );
 
-// IMPORTANT: do not return password in JSON
+// ✅ remove password automatically when sending JSON
 UserSchema.set("toJSON", {
-  transform: function (_doc, ret) {
+  transform: function (_doc, ret: any) {
     delete ret.password;
     return ret;
   },
 });
+
 
 export const User = models.User || model("User", UserSchema);

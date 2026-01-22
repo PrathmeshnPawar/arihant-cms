@@ -1,12 +1,17 @@
 import { connectDB } from "@/app/lib/db/connect";
-import { ok , fail } from "@/app/lib/response";
+import { ok, fail } from "@/app/lib/response";
 import { PostService } from "@/app/services/post.service";
 import { updatePostSchema } from "@/app/lib/validators/post.schema";
-export async function GET(_: Request, { params }: { params: { id: string } }) {
+
+type Ctx = { params: Promise<{ id: string }> };
+
+export async function GET(_: Request, ctx: Ctx) {
   try {
     await connectDB();
 
-    const post = await PostService.findById(params.id);
+    const { id } = await ctx.params; // ✅ await params
+
+    const post = await PostService.findById(id);
     if (!post) return fail("Post not found", 404);
 
     return ok(post);
@@ -15,9 +20,11 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
   }
 }
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, ctx: Ctx) {
   try {
     await connectDB();
+
+    const { id } = await ctx.params; // ✅ await params
 
     const body = await req.json();
     const parsed = updatePostSchema.safeParse(body);
@@ -26,7 +33,12 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       return fail("Validation error", 400, parsed.error.flatten());
     }
 
-    const updated = await PostService.update(params.id, parsed.data);
+    // optional normalize slug
+    if ((parsed.data as any).slug) {
+      (parsed.data as any).slug = (parsed.data as any).slug.toLowerCase().trim();
+    }
+
+    const updated = await PostService.update(id, parsed.data);
     if (!updated) return fail("Post not found", 404);
 
     return ok(updated, "Post updated");
@@ -35,11 +47,13 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   }
 }
 
-export async function DELETE(_: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_: Request, ctx: Ctx) {
   try {
     await connectDB();
 
-    const deleted = await PostService.remove(params.id);
+    const { id } = await ctx.params; // ✅ await params
+
+    const deleted = await PostService.remove(id);
     if (!deleted) return fail("Post not found", 404);
 
     return ok(deleted, "Post deleted");
