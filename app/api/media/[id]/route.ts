@@ -3,8 +3,7 @@ import { ok, fail } from "@/app/lib/response";
 import { requireAdmin } from "@/app/lib/guard";
 import { MediaService } from "@/app/services/media.service";
 
-import path from "path";
-import fs from "fs/promises";
+import { del } from "@vercel/blob";
 
 export const runtime = "nodejs";
 
@@ -12,7 +11,9 @@ type Ctx = { params: Promise<{ id: string }> };
 
 export async function DELETE(_: Request, ctx: Ctx) {
   try {
-    await requireAdmin();
+    const auth = await requireAdmin();
+    if (!auth.ok) return fail(auth.message, auth.status);
+
     await connectDB();
 
     const { id } = await ctx.params;
@@ -20,22 +21,19 @@ export async function DELETE(_: Request, ctx: Ctx) {
     const media = await MediaService.findById(id);
     if (!media) return fail("Media not found", 404);
 
-    // delete file from disk
-    const filePath = path.join(process.cwd(), "public", media.url); 
-    // media.url is "/uploads/xyz.png" → this path will be correct
-
+    // ✅ Delete from Vercel Blob
     try {
-      await fs.unlink(filePath);
-    } catch {
-      // file missing, ignore
+      await del(media.url);
+    } catch (err) {
+      console.warn("Blob already deleted or missing:", media.url);
     }
 
+    // ✅ Delete DB record
     const deleted = await MediaService.remove(id);
+
     return ok(deleted, "Media deleted");
   } catch (err: any) {
-    if (err?.message === "UNAUTHORIZED") return fail("Unauthorized", 401);
-    if (err?.message === "FORBIDDEN") return fail("Forbidden", 403);
-
+    console.error("❌ DELETE MEDIA ERROR:", err);
     return fail("Failed to delete media", 500, err?.message);
   }
 }
