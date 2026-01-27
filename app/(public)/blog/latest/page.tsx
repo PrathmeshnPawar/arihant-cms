@@ -35,7 +35,7 @@ export default async function LatestStoriesPage() {
 
       <Grid container spacing={4}>
         {posts.map((p: any) => (
-          <Grid item xs={12} sm={6} md={4} key={p._id}>
+          <Grid size={{xs:12, sm:6, md:4}}  key={p._id}>
             <Link href={`/blog/${p.slug}`} style={{ textDecoration: "none" }}>
               <Paper sx={{ borderRadius: 3, overflow: "hidden" }}>
                 <Box
