@@ -1,17 +1,15 @@
-import "server-only";
-import { headers } from "next/headers";
+import 'server-only'
 
-export async function getBaseUrl() {
-  const h: any = await headers(); // ✅ must await in Next 16
+/**
+ * Returns absolute base URL for server-side fetches.
+ * Works reliably on Vercel (dev, preview, prod).
+ */
+export function getBaseUrl() {
+  // ✅ Preferred (Vercel-safe)
+  if (process.env.NEXT_PUBLIC_VERCEL_URL) {
+    return process.env.NEXT_PUBLIC_VERCEL_URL
+  }
 
-  const get = (key: string) => {
-    if (!h) return undefined;
-    if (typeof h.get === "function") return h.get(key);
-    return h[key];
-  };
-
-  const host = get("x-forwarded-host") ?? get("host") ?? "localhost:3000";
-  const proto = get("x-forwarded-proto") ?? "http";
-
-  return `${proto}://${host}`;
+  // 🔁 Fallback for local dev
+  return 'http://localhost:3000'
 }
