@@ -6,7 +6,6 @@ import {
   Paper,
   Chip,
 } from "@mui/material";
-import Grid from "@mui/material/Grid";
 import { formatDate, readingTime } from "@/app/lib/utils/blogformat";
 import { getBaseUrl } from "@/app/lib/utils/baseUrl";
 
@@ -14,12 +13,10 @@ export const dynamic = "force-dynamic";
 
 async function getLatestPosts() {
   const baseUrl = await getBaseUrl();
-
   const res = await fetch(
     `${baseUrl}/api/posts/latest?days=30&limit=12`,
     { cache: "no-store" }
   );
-
   return res.ok ? res.json() : { data: { posts: [] } };
 }
 
@@ -33,39 +30,64 @@ export default async function LatestStoriesPage() {
         Latest Stories
       </Typography>
 
-      <Grid container spacing={4}>
+      {/* REPLACED GRID WITH CSS GRID BOX */}
+      <Box
+        sx={{
+          display: "grid",
+          gap: 4, // MUI spacing unit (4 = 32px)
+          gridTemplateColumns: {
+            xs: "1fr",           // 1 column on mobile
+            sm: "1fr 1fr",       // 2 columns on tablet
+            md: "1fr 1fr 1fr",   // 3 columns on desktop
+          },
+        }}
+      >
         {posts.map((p: any) => (
-          <Grid size={{xs:12, sm:6, md:4}}  key={p._id}>
-            <Link href={`/blog/${p.slug}`} style={{ textDecoration: "none" }}>
-              <Paper sx={{ borderRadius: 3, overflow: "hidden" }}>
-                <Box
-                  sx={{
-                    height: 200,
-                    backgroundImage: `url(${p.coverImage?.url || ""})`,
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                  }}
+          <Link
+            href={`/blog/${p.slug}`}
+            key={p._id}
+            style={{ textDecoration: "none" }}
+          >
+            <Paper
+              elevation={0}
+              sx={{
+                borderRadius: 3,
+                overflow: "hidden",
+                border: '1px solid',
+                borderColor: 'divider',
+                height: '100%',
+                transition: 'transform 0.2s',
+                '&:hover': { transform: 'translateY(-4px)' }
+              }}
+            >
+              <Box
+                sx={{
+                  height: 200,
+                  backgroundImage: `url(${p.coverImage?.url || ""})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  backgroundColor: 'grey.100'
+                }}
+              />
+              <Box sx={{ p: 2 }}>
+                <Chip
+                  label={p.category?.name || "News"}
+                  size="small"
+                  sx={{ mb: 1, fontWeight: 700 }}
+                  color="primary"
+                  variant="outlined"
                 />
-                <Box sx={{ p: 2 }}>
-                  <Chip
-                    label={p.category?.name}
-                    size="small"
-                    sx={{ mb: 1, fontWeight: 700 }}
-                  />
-                  <Typography variant="subtitle1" fontWeight={800}>
-                    {p.title}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {readingTime(p.content)} • {formatDate(p.publishedAt)}
-                  </Typography>
-                </Box>
-              </Paper>
-            </Link>
-          </Grid>
+                <Typography variant="subtitle1" fontWeight={800} color="text.primary" sx={{ lineHeight: 1.3, mb: 1 }}>
+                  {p.title}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {readingTime(p.content)} • {formatDate(p.publishedAt)}
+                </Typography>
+              </Box>
+            </Paper>
+          </Link>
         ))}
-      </Grid>
+      </Box>
     </Container>
   );
 }
-
-
