@@ -1,137 +1,129 @@
 import Link from "next/link";
-import {
-  Box,
-  Typography,
-  Paper,
-  Chip,
-  Stack,
-  Divider,
-} from "@mui/material";
-import { formatDate, readingTime } from "../../lib/utils/blogformat"
+import { Box, Typography, Paper, Chip, Stack, Divider, Container, Grid, Button } from "@mui/material";
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import { formatDate, readingTime } from "../../lib/utils/blogformat";
 import { getBaseUrl } from "@/app/lib/utils/baseUrl";
 
 export const dynamic = "force-dynamic";
 
 async function getPosts() {
+  try {
     const baseUrl = await getBaseUrl();
-  const res = await fetch(`${baseUrl}/api/public/posts?limit=12`, {
-    cache: "no-store",
-  });
-
-  return res.json();
+    const res = await fetch(`${baseUrl}/api/public/posts?limit=20`, { cache: "no-store" });
+    return res.ok ? res.json() : { data: { posts: [] } };
+  } catch { return { data: { posts: [] } }; }
 }
 
-function clamp2() {
-  return {
-    overflow: "hidden",
-    display: "-webkit-box",
-    WebkitLineClamp: 2,
-    WebkitBoxOrient: "vertical" as const,
-  };
-}
+const clamp = (lines: number) => ({
+  overflow: "hidden",
+  display: "-webkit-box",
+  WebkitLineClamp: lines,
+  WebkitBoxOrient: "vertical" as const,
+});
 
-function clamp3() {
-  return {
-    overflow: "hidden",
-    display: "-webkit-box",
-    WebkitLineClamp: 3,
-    WebkitBoxOrient: "vertical" as const,
-  };
-}
+// Section Header Component
+const SectionHeader = ({ title }: { title: string }) => (
+  <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3, mt: 5 }}>
+    <Typography variant="h5" fontWeight={900} color="#020617">{title}</Typography>
+    <Button 
+      endIcon={<ArrowForwardIcon fontSize="small" />} 
+      sx={{ fontWeight: 700, textTransform: 'none', color: 'text.secondary' }}
+    >
+      View All
+    </Button>
+  </Stack>
+);
 
 export default async function BlogPage() {
   const json = await getPosts();
   const posts = json?.data?.posts || [];
+  
+  const trendingPost = posts[0];
+  const sidePosts = posts.slice(1, 5);
+  const latestStories = posts.slice(5, 8);
+  const stockStories = posts.slice(8, 12);
 
   return (
-    <Box>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h3" fontWeight={900} sx={{ letterSpacing: -0.6 }}>
-          Blog
-        </Typography>
-        <Typography color="text.secondary">
-          Latest updates and insights
-        </Typography>
-      </Box>
-
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-          gap: 2.5,
-        }}
-      >
-        {posts.map((p: any) => {
-          const cover = p.coverImage?.url || p.coverImageUrl || "";
-
-          return (
-            <Link
-              key={p._id}
-              href={`/blog/${p.slug}`}
-              style={{ textDecoration: "none" }}
-            >
-              <Paper
-                sx={{
-                  borderRadius: 4,
-                  overflow: "hidden",
-                  height: "100%",
-                  transition: "0.2s",
-                  boxShadow: "0 10px 30px rgba(2,6,23,0.06)",
-                  "&:hover": {
-                    transform: "translateY(-4px)",
-                    boxShadow: "0 18px 40px rgba(2,6,23,0.10)",
-                  },
-                }}
-              >
-                {/* Cover */}
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      {/* ===== TOP SECTION: TRENDING & PRODUCT NEWS ===== */}
+      <Grid container spacing={4}>
+        <Grid item xs={12} md={8}>
+          <Typography variant="h5" fontWeight={900} sx={{ mb: 3 }}>Trending Now</Typography>
+          {trendingPost && (
+            <Link href={`/blog/${trendingPost.slug}`} style={{ textDecoration: 'none' }}>
+              <Box sx={{ position: 'relative', borderRadius: 4, overflow: 'hidden', mb: 2 }}>
                 <Box
                   sx={{
-                    height: 220,
-                    bgcolor: "grey.100",
-                    backgroundImage: cover ? `url(${cover})` : "none",
-                    backgroundPosition: "center",
-                    backgroundSize: "cover",
+                    height: 400,
+                    backgroundImage: `url(${trendingPost.coverImage?.url || ''})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
                   }}
                 />
-
-                <Box sx={{ p: 2.25 }}>
-                  {/* Meta */}
-                  <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
-                    {p.category?.name && (
-                      <Chip
-                        size="small"
-                        label={p.category.name}
-                        component="a"
-                        href={`/blog/category/${p.category.slug}`}
-                        clickable
-                        sx={{ fontWeight: 700 }}
-                      />
-                    )}
-
+                <Box sx={{ py: 2 }}>
+                  <Typography variant="caption" color="primary" fontWeight={800}>TRENDING</Typography>
+                  <Typography variant="h4" fontWeight={900} sx={{ mt: 1, color: '#020617' }}>
+                    {trendingPost.title}
+                  </Typography>
+                  <Stack direction="row" spacing={1} mt={1}>
                     <Typography variant="caption" color="text.secondary">
-                      {formatDate(p.publishedAt || p.createdAt)} • {readingTime(p.content || "")}
+                      {readingTime(trendingPost.content)} • {formatDate(trendingPost.publishedAt)}
                     </Typography>
                   </Stack>
+                </Box>
+              </Box>
+            </Link>
+          )}
+        </Grid>
 
-                  <Divider sx={{ my: 1.3 }} />
-
-                  <Typography variant="h6" fontWeight={900} sx={{ ...clamp2(), mb: 0.7 }}>
+        <Grid item xs={12} md={4}>
+          <Typography variant="h5" fontWeight={900} sx={{ mb: 3 }}>Product News</Typography>
+          <Stack spacing={3}>
+            {sidePosts.map((p: any) => (
+              <Box key={p._id} sx={{ pb: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
+                <Typography variant="caption" color="text.disabled">{readingTime(p.content)}</Typography>
+                <Link href={`/blog/${p.slug}`} style={{ textDecoration: 'none' }}>
+                  <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#020617', '&:hover': { color: 'primary.main' }, ...clamp(2) }}>
                     {p.title}
                   </Typography>
+                </Link>
+                <Chip label={p.category?.name} size="small" sx={{ height: 20, fontSize: 10, mt: 1, fontWeight: 700 }} />
+              </Box>
+            ))}
+          </Stack>
+        </Grid>
+      </Grid>
 
-                  <Typography color="text.secondary" sx={{ ...clamp3(), fontSize: 14.5 }}>
-                    {p.excerpt || "Read the full post →"}
-                  </Typography>
-                </Box>
+      {/* ===== LATEST STORIES ROW ===== */}
+      <SectionHeader title="Latest Stories" />
+      <Grid container spacing={3}>
+        {latestStories.map((p: any) => (
+          <Grid item xs={12} sm={4} key={p._id}>
+            <Link href={`/blog/${p.slug}`} style={{ textDecoration: 'none' }}>
+              <Paper elevation={0} sx={{ borderRadius: 3, overflow: 'hidden', bgcolor: 'transparent' }}>
+                <Box sx={{ height: 180, borderRadius: 3, backgroundImage: `url(${p.coverImage?.url})`, backgroundSize: 'cover', mb: 2 }} />
+                <Typography variant="caption" color="primary" fontWeight={700}>{p.category?.name}</Typography>
+                <Typography variant="subtitle1" fontWeight={800} sx={{ color: '#020617', mt: 0.5, ...clamp(2) }}>{p.title}</Typography>
+                <Typography variant="caption" color="text.disabled">{readingTime(p.content)} • {formatDate(p.publishedAt)}</Typography>
               </Paper>
             </Link>
-          );
-        })}
-      </Box>
+          </Grid>
+        ))}
+      </Grid>
 
-      {posts.length === 0 && (
-        <Typography color="text.secondary">No posts found.</Typography>
-      )}
-    </Box>
+      {/* ===== STOCKS SECTION ===== */}
+      <SectionHeader title="Stocks" />
+      <Grid container spacing={3}>
+        {stockStories.map((p: any) => (
+          <Grid item xs={12} sm={3} key={p._id}>
+            <Link href={`/blog/${p.slug}`} style={{ textDecoration: 'none' }}>
+              <Typography variant="caption" color="secondary" fontWeight={700}>{p.category?.name}</Typography>
+              <Typography variant="body1" fontWeight={700} sx={{ color: '#020617', mt: 0.5, mb: 1, ...clamp(2) }}>{p.title}</Typography>
+              <Typography variant="caption" color="text.disabled">{readingTime(p.content)} • {formatDate(p.publishedAt)}</Typography>
+            </Link>
+          </Grid>
+        ))}
+      </Grid>
+    </Container>
   );
 }

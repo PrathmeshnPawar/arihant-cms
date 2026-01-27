@@ -1,7 +1,16 @@
 import Link from "next/link";
-import { Box, Typography, Chip, Divider, Paper, Stack } from "@mui/material";
-import { formatDate, readingTime } from "../../../lib/utils/blogformat"
+import {
+  Box,
+  Typography,
+  Chip,
+  Divider,
+  Paper,
+  Stack,
+} from "@mui/material";
+import { formatDate, readingTime } from "../../../lib/utils/blogformat";
 import { getBaseUrl } from "@/app/lib/utils/baseUrl";
+import type { Metadata } from "next";
+import { resolvePostSEO } from "@/app/lib/utils/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -10,8 +19,27 @@ async function getPost(slug: string) {
   const res = await fetch(`${baseUrl}/api/public/posts/${slug}`, {
     cache: "no-store",
   });
-
   return res.json();
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const json = await getPost(slug);
+
+  if (!json?.success) {
+    return {
+      title: "Post not found | Arihant CMS",
+      robots: { index: false, follow: false },
+    };
+  }
+
+  const baseUrl = await getBaseUrl();
+  const canonical = `${baseUrl}/blog/${slug}`;
+  return resolvePostSEO(json.data, { canonical });
 }
 
 export default async function BlogPostPage({
@@ -24,8 +52,8 @@ export default async function BlogPostPage({
 
   if (!json?.success) {
     return (
-      <Box sx={{ py: 6 }}>
-        <Typography variant="h5" fontWeight={900}>
+      <Box sx={{ py: 8, textAlign: "center" }}>
+        <Typography variant="h4" fontWeight={900}>
           Post not found
         </Typography>
       </Box>
@@ -36,112 +64,168 @@ export default async function BlogPostPage({
   const cover = post.coverImage?.url || "";
 
   return (
-    <Box sx={{ maxWidth: 820, mx: "auto" }}>
-      {/* Title */}
-      <Typography variant="h3" fontWeight={950} sx={{ letterSpacing: -0.8 }}>
-        {post.title}
-      </Typography>
-
-      {/* Meta */}
-      <Stack direction="row" spacing={1} sx={{ mt: 2, flexWrap: "wrap" }} alignItems="center">
-        {post.category?.name && (
-          <Chip
-            label={post.category.name}
-            variant="outlined"
-            component="a"
-            href={`/blog/category/${post.category.slug}`}
-            clickable
-            sx={{ fontWeight: 800 }}
-          />
-        )}
-
-        <Typography variant="body2" color="text.secondary">
-          {formatDate(post.publishedAt || post.createdAt)} • {readingTime(post.content || "")}
-        </Typography>
-      </Stack>
-
-      {/* Tags */}
-      <Box sx={{ mt: 1.5, display: "flex", gap: 1, flexWrap: "wrap" }}>
-        {(post.tags || []).map((t: any) => (
-          <Chip
-            key={t._id}
-            label={t.name}
-            size="small"
-            component="a"
-            href={`/blog/tag/${t.slug}`}
-            clickable
-          />
-        ))}
-      </Box>
-
-      <Divider sx={{ my: 3 }} />
-
-      {/* Cover */}
-      {cover && (
-        <Paper
-          elevation={0}
-          sx={{
-            overflow: "hidden",
-            borderRadius: 4,
-            border: "1px solid",
-            borderColor: "grey.200",
-            mb: 3,
-          }}
-        >
-          <Box
-            component="img"
-            src={cover}
-            alt={post.title}
-            sx={{
-              width: "100%",
-              maxHeight: 460,
-              objectFit: "cover",
-              display: "block",
-            }}
-          />
-        </Paper>
-      )}
-
-      {/* Excerpt */}
-      {post.excerpt && (
-        <Typography
-          sx={{
-            fontSize: 18,
-            color: "text.secondary",
-            lineHeight: 1.9,
-            mb: 3,
-          }}
-        >
-          {post.excerpt}
-        </Typography>
-      )}
-
-      {/* Content */}
+    <Box>
+      {/* ===== HERO ===== */}
       <Box
         sx={{
-          "& p": { fontSize: 17, lineHeight: 2.0, mb: 2 },
-          "& h2": { mt: 4, mb: 1.5, fontWeight: 900 },
-          "& h3": { mt: 3, mb: 1.2, fontWeight: 900 },
-          "& ul": { pl: 3, mb: 2 },
-          "& li": { mb: 1 },
-          "& img": { maxWidth: "100%", borderRadius: 2, margin: "14px 0" },
-          "& blockquote": {
-            borderLeft: "4px solid #111827",
-            pl: 2,
-            color: "text.secondary",
-            fontStyle: "italic",
-            my: 2,
-          },
+          mb: 6,
+          borderRadius: 5,
+          overflow: "hidden",
+          position: "relative",
+          background: cover
+            ? `url(${cover})`
+            : "linear-gradient(135deg, #020617, #0f172a)",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          minHeight: 420,
+          display: "flex",
+          alignItems: "flex-end",
         }}
-        dangerouslySetInnerHTML={{ __html: post.content }}
-      />
+      >
+        {/* Overlay */}
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "linear-gradient(to top, rgba(2,6,23,.9), rgba(2,6,23,.2))",
+          }}
+        />
 
-      {/* Footer */}
-      <Divider sx={{ my: 5 }} />
+        {/* Hero Content */}
+        <Box
+          sx={{
+            position: "relative",
+            zIndex: 1,
+            p: { xs: 3, md: 5 },
+            maxWidth: 820,
+            color: "#fff",
+          }}
+        >
+          <Stack direction="row" spacing={1} mb={1} flexWrap="wrap">
+            {post.category?.name && (
+              <Chip
+                label={post.category.name}
+                size="small"
+                sx={{
+                  bgcolor: "primary.main",
+                  color: "#fff",
+                  fontWeight: 800,
+                }}
+              />
+            )}
+            <Chip
+              size="small"
+              label={readingTime(post.content || "")}
+              sx={{ bgcolor: "rgba(255,255,255,.15)", color: "#fff" }}
+            />
+          </Stack>
 
-      <Link href="/blog" style={{ textDecoration: "none" }}>
-        <Typography sx={{ fontWeight: 900 }}>← Back to Blog</Typography>
-      </Link>
+          <Typography
+            variant="h3"
+            fontWeight={950}
+            sx={{ lineHeight: 1.15, letterSpacing: -0.8, mb: 1 }}
+          >
+            {post.title}
+          </Typography>
+
+          <Typography sx={{ opacity: 0.85 }}>
+            {formatDate(post.publishedAt || post.createdAt)}
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* ===== ARTICLE BODY ===== */}
+      <Box sx={{ maxWidth: 820, mx: "auto" }}>
+        {/* Tags */}
+        <Box sx={{ mb: 3, display: "flex", gap: 1, flexWrap: "wrap" }}>
+          {(post.tags || []).map((t: any) => (
+            <Chip
+              key={t._id}
+              label={t.name}
+              size="small"
+              component="a"
+              href={`/blog/tag/${t.slug}`}
+              clickable
+            />
+          ))}
+        </Box>
+
+        {/* Excerpt */}
+        {post.excerpt && (
+          <Paper
+            elevation={0}
+            sx={{
+              mb: 4,
+              p: 3,
+              borderRadius: 3,
+              background:
+                "linear-gradient(180deg, #f8fafc, #ffffff)",
+              borderLeft: "4px solid",
+              borderColor: "primary.main",
+            }}
+          >
+            <Typography
+              sx={{
+                fontSize: 18,
+                lineHeight: 1.9,
+                color: "text.secondary",
+              }}
+            >
+              {post.excerpt}
+            </Typography>
+          </Paper>
+        )}
+
+        {/* Content */}
+        <Box
+          sx={{
+            "& p": {
+              fontSize: 17,
+              lineHeight: 2.05,
+              mb: 2.5,
+            },
+            "& h2": {
+              mt: 6,
+              mb: 2,
+              fontWeight: 900,
+              letterSpacing: -0.4,
+            },
+            "& h3": {
+              mt: 4,
+              mb: 1.5,
+              fontWeight: 900,
+            },
+            "& ul": { pl: 3, mb: 3 },
+            "& li": { mb: 1 },
+            "& img": {
+              maxWidth: "100%",
+              borderRadius: 3,
+              my: 3,
+              boxShadow: "0 15px 40px rgba(2,6,23,.15)",
+            },
+            "& blockquote": {
+              borderLeft: "4px solid #020617",
+              pl: 3,
+              py: 1,
+              my: 3,
+              color: "text.secondary",
+              fontStyle: "italic",
+              backgroundColor: "#f8fafc",
+            },
+          }}
+          dangerouslySetInnerHTML={{ __html: post.content }}
+        />
+
+        {/* Footer */}
+        <Divider sx={{ my: 6 }} />
+
+        <Link href="/blog" style={{ textDecoration: "none" }}>
+          <Typography sx={{ fontWeight: 900 }}>
+            ← Back to Blog
+          </Typography>
+        </Link>
+      </Box>
     </Box>
   );
 }

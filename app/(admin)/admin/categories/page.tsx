@@ -25,7 +25,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import RefreshIcon from "@mui/icons-material/Refresh";
 
 import CategoryDialog, { CategoryForm } from "../../../components/admin/Category/CategoryDialog";
-import ConfirmDialog from "../common/ConfirmDialouge";
+import ConfirmDialog from "../../../components/admin/common/ConfirmDialouge";
 
 type Category = {
   _id: string;

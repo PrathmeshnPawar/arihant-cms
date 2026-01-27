@@ -30,8 +30,10 @@ export async function PUT(req: Request, ctx: Ctx) {
     const parsed = updatePostSchema.safeParse(body);
 
     if (!parsed.success) {
-      return fail("Validation error", 400, parsed.error.flatten());
-    }
+  console.error("❌ ZOD VALIDATION ERROR:", parsed.error);
+  return fail("Validation error", 400, parsed.error);
+}
+
 
     // optional normalize slug
     if ((parsed.data as any).slug) {

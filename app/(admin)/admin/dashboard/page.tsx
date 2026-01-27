@@ -132,7 +132,11 @@ export default function DashboardPage() {
       const tagsJson = tagsRes.ok ? await tagsRes.json() : { data: [] };
       const mediaJson = mediaRes.ok ? await mediaRes.json() : { data: [] };
 
-      const posts: Post[] = postsJson.data || [];
+const posts: Post[] = Array.isArray(postsJson?.data?.posts)
+  ? postsJson.data.posts
+  : Array.isArray(postsJson?.data)
+    ? postsJson.data
+    : [];
       const categories = categoriesJson.data || [];
       const tags = tagsJson.data || [];
       const media = mediaJson.data || [];
@@ -339,9 +343,7 @@ export default function DashboardPage() {
                 <Button variant="outlined">Open Media</Button>
               </Link>
 
-              {/* <Link href="/admin/users" style={{ textDecoration: "none" }}>
-                <Button variant="outlined">Manage Users</Button>
-              </Link> */}
+              
             </Box>
           </Paper>
         </>

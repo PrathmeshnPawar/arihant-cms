@@ -8,19 +8,14 @@ export default function NewPostPage() {
     content: "",
     status: "draft",
 
-    category: "",        // ✅ Category ObjectId
-    tags: [],            // ✅ Tag ObjectIds
+    category: "",
+    tags: [],
 
-    coverImage: "",      // ✅ Media ObjectId
-    coverImageUrl: "",   // UI preview
+    coverImage: "",
+    coverImageUrl: "",
 
+    // ✅ SEO aligns with resolver (minimal, intentional)
     seo: {
-      metaTitle: "",
-      metaDescription: "",
-      canonicalUrl: "",
-      ogTitle: "",
-      ogDescription: "",
-      ogImage: null,
       robotsIndex: true,
       robotsFollow: true,
     },

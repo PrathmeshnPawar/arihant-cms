@@ -25,7 +25,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 
 import Link from "next/link";
-import ConfirmDialog from "../common/ConfirmDialouge";
+import ConfirmDialog from "../../../components/admin/common/ConfirmDialouge";
 
 type Post = {
   _id: string;
@@ -53,24 +53,28 @@ export default function PostsPage() {
     setSnack({ open: true, type, message });
   }
 
-  async function fetchPosts() {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/posts", { credentials: "include" });
-      const json = await res.json();
+ async function fetchPosts() {
+  setLoading(true);
+  try {
+    const res = await fetch("/api/posts", { credentials: "include" });
+    const json = await res.json();
 
-      if (!res.ok) {
-        toast("error", json?.message || "Failed to fetch posts");
-        setRows([]);
-        return;
-      }
-      setRows(json.data || []);
-    } catch (e: any) {
-      toast("error", e?.message || "Network error");
-    } finally {
-      setLoading(false);
+    if (!res.ok) {
+      toast("error", json?.message || "Failed to fetch posts");
+      setRows([]);
+      return;
     }
+
+    const posts = Array.isArray(json?.data?.posts) ? json.data.posts : [];
+    setRows(posts);
+  } catch (e: any) {
+    toast("error", e?.message || "Network error");
+    setRows([]);
+  } finally {
+    setLoading(false);
   }
+}
+
 
   React.useEffect(() => {
     fetchPosts();
@@ -80,6 +84,28 @@ export default function PostsPage() {
     setDeleteTarget(post);
     setConfirmOpen(true);
   }
+  async function fetchPostsAndFilterDrafts() {
+  setLoading(true);
+  try {
+    const res = await fetch("/api/posts?status=draft", { credentials: "include" });
+    const json = await res.json();
+
+    if (!res.ok) {
+      toast("error", json?.message || "Failed to fetch drafts");
+      setRows([]);
+      return;
+    }
+
+    const drafts = Array.isArray(json?.data?.posts) ? json.data.posts : [];
+    setRows(drafts);
+  } catch (e: any) {
+    toast("error", e?.message || "Network error");
+    setRows([]); // ✅ important
+  } finally {
+    setLoading(false);
+  }
+}
+
 
   async function doDelete() {
     if (!deleteTarget) return;
@@ -126,7 +152,7 @@ export default function PostsPage() {
               </Button>
             </Link>
 
-            <IconButton onClick={fetchPosts}>
+            <IconButton onClick={fetchPostsAndFilterDrafts}>
               <RefreshIcon />
             </IconButton>
           </Box>

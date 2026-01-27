@@ -18,8 +18,9 @@ export async function GET(_: Request, ctx: Ctx) {
       .populate("category", "name slug")
       .populate("tags", "name slug")
       .populate("coverImage", "url originalName mimeType")
-      .populate("gallery", "url originalName mimeType") // if you have gallery images
-      .select("+content");
+      .populate("gallery", "url originalName mimeType")
+      .populate("seo.ogImage", "url originalName mimeType") // ✅ REQUIRED
+      .select("+content"); // keep content for page render
 
     if (!post) return fail("Post not found", 404);
 

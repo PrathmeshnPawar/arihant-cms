@@ -16,7 +16,7 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 
 import MediaUploader from "@/app/components/admin/media/MediaUploader";
 import MediaGrid, { MediaItem } from "@/app/components/admin/media/MediaGrid";
-import ConfirmDialog from "../common/ConfirmDialouge";
+import ConfirmDialog from "../../../components/admin/common/ConfirmDialouge";
 
 export default function MediaPage() {
   const [items, setItems] = React.useState<MediaItem[]>([]);

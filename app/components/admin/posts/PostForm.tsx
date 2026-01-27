@@ -16,6 +16,7 @@ import {
 
 import MediaPickerDialog from "./MediaPickerDialog";
 import AppFlowEditor, { AppFlowStep } from "./AppFlowEditor";
+import TiptapEditor from "../common/TipTapEditor";
 
 type Category = { _id: string; name: string; slug: string };
 type Tag = { _id: string; name: string; slug: string };
@@ -38,13 +39,14 @@ export type PostPayload = {
 
   // ✅ WordPress-style SEO fields
   seo?: {
+    // Leave undefined / empty to auto-generate via SEO resolver
     metaTitle?: string;
     metaDescription?: string;
     canonicalUrl?: string;
 
     ogTitle?: string;
     ogDescription?: string;
-    ogImage?: string | null; // Media ObjectId
+    ogImage?: string | null;
 
     robotsIndex?: boolean;
     robotsFollow?: boolean;
@@ -69,14 +71,62 @@ export default function PostForm({ mode, initialValues, postId }: Props) {
   const [pickerOpen, setPickerOpen] = React.useState(false);
 
   // ✅ Same picker used for both cover + OG
-  const [mediaPickTarget, setMediaPickTarget] = React.useState<"cover" | "og">("cover");
+  const [mediaPickTarget, setMediaPickTarget] = React.useState<"cover" | "og">(
+    "cover",
+  );
 
-  const [snack, setSnack] = React.useState<{ open: boolean; type: "success" | "error"; message: string }>({
+  const [snack, setSnack] = React.useState<{
+    open: boolean;
+    type: "success" | "error";
+    message: string;
+  }>({
     open: false,
     type: "success",
     message: "",
   });
 
+  const DRAFT_KEY = postId ? `cms_post_draft_${postId}` : "cms_post_draft_new";
+  const [uploadingMedia, setUploadingMedia] = React.useState(false);
+
+  async function uploadToServer(file: File) {
+    const fd = new FormData();
+    fd.append("files", file); // change to "file" if your api expects that
+
+    const res = await fetch("/api/media/upload", {
+      method: "POST",
+      credentials: "include",
+      body: fd,
+    });
+
+    const json = await res.json();
+    if (!res.ok) throw new Error(json?.message || "Upload failed");
+
+    const uploaded = json?.data?.[0];
+    if (!uploaded?._id) throw new Error("Upload response invalid");
+
+    return uploaded; // { _id, url, ... }
+  }
+
+  React.useEffect(() => {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+
+      const saved = JSON.parse(raw);
+      setValues((prev) => ({ ...prev, ...saved }));
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  React.useEffect(() => {
+    const id = setTimeout(() => {
+      try {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(values));
+      } catch {}
+    }, 700); // Gmail like debounce
+
+    return () => clearTimeout(id);
+  }, [values, DRAFT_KEY]);
   function toast(type: "success" | "error", message: string) {
     setSnack({ open: true, type, message });
   }
@@ -125,45 +175,93 @@ export default function PostForm({ mode, initialValues, postId }: Props) {
   }, []);
 
   async function submit() {
-    setSaving(true);
-    try {
-      const payload = {
-        ...values,
-        title: values.title.trim(),
-        slug: values.slug.trim() ? slugify(values.slug) : slugify(values.title),
+  setSaving(true);
+  try {
+    // ✅ clean SEO
+    const cleanedSeo = values.seo
+      ? Object.fromEntries(
+          Object.entries(values.seo).filter(
+            ([_, v]) =>
+              v !== "" &&
+              v !== null &&
+              v !== undefined
+          )
+        )
+      : undefined;
 
-        tags: Array.isArray(values.tags) ? values.tags : [],
-        gallery: Array.isArray(values.gallery) ? values.gallery : [],
+    // ✅ build backend-safe payload (NO spreading)
+    const payload = {
+      title: values.title.trim(),
+      slug: values.slug.trim()
+        ? slugify(values.slug)
+        : slugify(values.title),
 
-        seo: values.seo || {
-          robotsIndex: true,
-          robotsFollow: true,
-        },
-      };
+      excerpt: values.excerpt,
+      content: values.content,
+      status: values.status,
 
-      const url = mode === "create" ? "/api/posts" : `/api/posts/${postId}`;
-      const method = mode === "create" ? "POST" : "PUT";
+      category:
+        typeof values.category === "string" && values.category.length > 0
+          ? values.category
+          : undefined,
 
-      const res = await fetch(url, {
-        method,
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      tags: Array.isArray(values.tags)
+        ? values.tags.filter(
+            (t): t is string => typeof t === "string" && t.length > 0
+          )
+        : [],
 
-      const json = await res.json();
-      if (!res.ok) {
-        toast("error", json?.message || "Save failed");
-        return;
-      }
+      gallery: Array.isArray(values.gallery)
+        ? values.gallery.filter(Boolean)
+        : [],
 
-      toast("success", mode === "create" ? "Post created" : "Post updated");
-    } catch (e: any) {
-      toast("error", e?.message || "Network error");
-    } finally {
-      setSaving(false);
+      coverImage:
+        typeof values.coverImage === "string" && values.coverImage.length > 0
+          ? values.coverImage
+          : undefined,
+
+      seo: cleanedSeo
+        ? {
+            ...cleanedSeo,
+            ogImage:
+              typeof cleanedSeo.ogImage === "string"
+                ? cleanedSeo.ogImage
+                : undefined,
+          }
+        : undefined,
+
+      appFlow: values.appFlow || [],
+    };
+
+    console.log("🚀 FINAL PAYLOAD:", payload); // remove later
+
+    const url = mode === "create"
+      ? "/api/posts"
+      : `/api/posts/${postId}`;
+
+    const res = await fetch(url, {
+      method: mode === "create" ? "POST" : "PUT",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const json = await res.json();
+
+    if (!res.ok) {
+      console.error("❌ API ERROR:", json);
+      toast("error", json?.message || "Save failed");
+      return;
     }
+
+    toast("success", mode === "create" ? "Post created" : "Post updated");
+  } catch (e: any) {
+    toast("error", e?.message || "Network error");
+  } finally {
+    setSaving(false);
   }
+}
+
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -172,7 +270,8 @@ export default function PostForm({ mode, initialValues, postId }: Props) {
           {mode === "create" ? "Create Post" : "Edit Post"}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Write content, attach cover image, add category/tags, and SEO like WordPress
+          Write content, attach cover image, add category/tags, and SEO like
+          WordPress
         </Typography>
       </Box>
 
@@ -206,13 +305,14 @@ export default function PostForm({ mode, initialValues, postId }: Props) {
             minRows={2}
           />
 
-          <TextField
-            label="Content"
+          <Typography fontWeight={900} sx={{ mt: 1 }}>
+            Content
+          </Typography>
+
+          <TiptapEditor
             value={values.content}
-            onChange={(e) => set("content", e.target.value)}
-            fullWidth
-            multiline
-            minRows={10}
+            onChange={(html) => set("content", html)}
+            minHeight={320}
           />
 
           <TextField
@@ -227,7 +327,15 @@ export default function PostForm({ mode, initialValues, postId }: Props) {
           </TextField>
 
           {/* Cover Image */}
-          <Box sx={{ display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
+          <Box
+            sx={{
+              display: "flex",
+              gap: 2,
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
+          >
+            {/* choose from media library */}
             <Button
               variant="outlined"
               onClick={() => {
@@ -238,6 +346,42 @@ export default function PostForm({ mode, initialValues, postId }: Props) {
               Choose Cover Image
             </Button>
 
+            {/* ✅ upload from local machine */}
+            <Button
+              variant="contained"
+              component="label"
+              disabled={uploadingMedia}
+              onClick={() => setMediaPickTarget("cover")}
+            >
+              {uploadingMedia ? "Uploading..." : "Upload from Computer"}
+              <input
+                type="file"
+                hidden
+                accept="image/*"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+
+                  try {
+                    setUploadingMedia(true);
+                    const uploaded = await uploadToServer(file);
+
+                    // ✅ set cover image
+                    set("coverImage", uploaded._id);
+                    set("coverImageUrl", uploaded.url);
+
+                    toast("success", "Cover image uploaded ✅");
+                  } catch (err: any) {
+                    toast("error", err?.message || "Upload failed");
+                  } finally {
+                    setUploadingMedia(false);
+                    e.target.value = "";
+                  }
+                }}
+              />
+            </Button>
+
+            {/* preview */}
             {values.coverImageUrl ? (
               <Chip
                 label={`Selected: ${values.coverImageUrl}`}
@@ -290,7 +434,10 @@ export default function PostForm({ mode, initialValues, postId }: Props) {
           </TextField>
 
           {/* ✅ SEO Panel */}
-          <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3, bgcolor: "grey.50" }}>
+          <Paper
+            variant="outlined"
+            sx={{ p: 2.5, borderRadius: 3, bgcolor: "grey.50" }}
+          >
             <Typography fontWeight={900} sx={{ mb: 0.5 }}>
               SEO (WordPress style)
             </Typography>
@@ -340,7 +487,15 @@ export default function PostForm({ mode, initialValues, postId }: Props) {
                 minRows={2}
               />
 
-              <Box sx={{ display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 2,
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                }}
+              >
+                {/* choose from media library */}
                 <Button
                   variant="outlined"
                   onClick={() => {
@@ -349,6 +504,40 @@ export default function PostForm({ mode, initialValues, postId }: Props) {
                   }}
                 >
                   Choose OG Image
+                </Button>
+
+                {/* ✅ upload OG from local machine */}
+                <Button
+                  variant="contained"
+                  component="label"
+                  disabled={uploadingMedia}
+                  onClick={() => setMediaPickTarget("og")}
+                >
+                  {uploadingMedia ? "Uploading..." : "Upload OG from Computer"}
+                  <input
+                    type="file"
+                    hidden
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+
+                      try {
+                        setUploadingMedia(true);
+                        const uploaded = await uploadToServer(file);
+
+                        // ✅ set og image
+                        setSeo("ogImage", uploaded._id);
+
+                        toast("success", "OG image uploaded ✅");
+                      } catch (err: any) {
+                        toast("error", err?.message || "Upload failed");
+                      } finally {
+                        setUploadingMedia(false);
+                        e.target.value = "";
+                      }
+                    }}
+                  />
                 </Button>
 
                 {values.seo?.ogImage ? (
@@ -368,7 +557,9 @@ export default function PostForm({ mode, initialValues, postId }: Props) {
                   select
                   label="Robots Index"
                   value={(values.seo?.robotsIndex ?? true) ? "true" : "false"}
-                  onChange={(e) => setSeo("robotsIndex", e.target.value === "true")}
+                  onChange={(e) =>
+                    setSeo("robotsIndex", e.target.value === "true")
+                  }
                   sx={{ minWidth: 200 }}
                 >
                   <MenuItem value="true">Index</MenuItem>
@@ -379,7 +570,9 @@ export default function PostForm({ mode, initialValues, postId }: Props) {
                   select
                   label="Robots Follow"
                   value={(values.seo?.robotsFollow ?? true) ? "true" : "false"}
-                  onChange={(e) => setSeo("robotsFollow", e.target.value === "true")}
+                  onChange={(e) =>
+                    setSeo("robotsFollow", e.target.value === "true")
+                  }
                   sx={{ minWidth: 200 }}
                 >
                   <MenuItem value="true">Follow</MenuItem>
@@ -391,13 +584,20 @@ export default function PostForm({ mode, initialValues, postId }: Props) {
 
           {/* Save */}
           <Button variant="contained" onClick={submit} disabled={saving}>
-            {saving ? "Saving..." : mode === "create" ? "Create Post" : "Update Post"}
+            {saving
+              ? "Saving..."
+              : mode === "create"
+                ? "Create Post"
+                : "Update Post"}
           </Button>
         </Stack>
       </Paper>
 
       {/* App Flow */}
-      <AppFlowEditor value={values.appFlow} onChange={(steps) => set("appFlow", steps)} />
+      <AppFlowEditor
+        value={values.appFlow}
+        onChange={(steps) => set("appFlow", steps)}
+      />
 
       {/* Media Picker */}
       <MediaPickerDialog

@@ -14,9 +14,16 @@ export const PostService = {
     return Post.findById(id);
   },
 
-  async update(id: string, dto: any) {
-    return Post.findByIdAndUpdate(id, dto, { new: true });
-  },
+async update(id: string, dto: any) {
+  return Post.findByIdAndUpdate(
+    id,
+    { $set: dto }, // ✅ CRITICAL
+    {
+      new: true,
+      runValidators: true, // ✅ also important
+    }
+  );
+},
 
   async remove(id: string) {
     return Post.findByIdAndDelete(id);

@@ -25,7 +25,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import RefreshIcon from "@mui/icons-material/Refresh";
 
 import TagDialog, { TagForm } from "../../../components/admin/tags/TagDialog";
-import ConfirmDialog from "../common/ConfirmDialouge";
+import ConfirmDialog from "../../../components/admin/common/ConfirmDialouge";
 
 type Tag = {
   _id: string;

@@ -18,6 +18,7 @@ import CategoryIcon from "@mui/icons-material/Category";
 import TagIcon from "@mui/icons-material/LocalOffer";
 import ImageIcon from "@mui/icons-material/Image";
 import PeopleIcon from "@mui/icons-material/People";
+import { Drafts } from "@mui/icons-material";
 
 const nav = [
   { label: "Dashboard", href: "/admin/dashboard", icon: <DashboardIcon /> },
@@ -26,6 +27,7 @@ const nav = [
   { label: "Tags", href: "/admin/tags", icon: <TagIcon /> },
   { label: "Media", href: "/admin/media", icon: <ImageIcon /> },
   { label: "Users", href: "/admin/users", icon: <PeopleIcon /> },
+  { label: "Drafts", href: "/admin/posts/drafts", icon: <Drafts /> },
 ];
 
 export default function Sidebar() {
@@ -46,16 +48,9 @@ export default function Sidebar() {
         display: { xs: "none", md: "block" },
       }}
     >
-      <Box sx={{ p: 2 }}>
-        <Typography fontWeight={900} fontSize={16}>
-          Arihant CMS
-        </Typography>
-        <Typography variant="caption" sx={{ opacity: 0.8 }}>
-          Admin Panel
-        </Typography>
-      </Box>
+     
 
-      <Divider sx={{ borderColor: "rgba(255,255,255,0.15)" }} />
+      <Divider sx={{ borderColor: "rgba(255,255,255,0.15)", pt:2 }} />
 
       <List sx={{ px: 1, py: 1 }}>
         {nav.map((item) => {

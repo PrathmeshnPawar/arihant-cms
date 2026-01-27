@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic";
 
 async function getPost(slug: string) {
    const baseUrl = await getBaseUrl();
+   
   const res = await fetch(`${baseUrl}/api/public/posts/${slug}`, {
     cache: "no-store",
   });

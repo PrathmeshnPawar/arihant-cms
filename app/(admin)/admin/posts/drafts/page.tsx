@@ -26,7 +26,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PublishIcon from "@mui/icons-material/Publish";
 
-import ConfirmDialog from "../../common/ConfirmDialouge";
+import ConfirmDialog from "../../../../components/admin/common/ConfirmDialouge";
 
 type Post = {
   _id: string;
@@ -63,29 +63,28 @@ export default function DraftPostsPage() {
   }
 
   async function fetchPostsAndFilterDrafts() {
-    setLoading(true);
-    try {
-      // ✅ use existing posts API
-      const res = await fetch("/api/posts", { credentials: "include" });
-      const json = await res.json();
+  setLoading(true);
+  try {
+    const res = await fetch("/api/posts?status=draft", { credentials: "include" });
+    const json = await res.json();
 
-      if (!res.ok) {
-        toast("error", json?.message || "Failed to fetch posts");
-        setRows([]);
-        return;
-      }
-
-      const posts: Post[] = json.data || [];
-
-      // ✅ filter drafts locally
-      const drafts = posts.filter((p) => p.status === "draft");
-      setRows(drafts);
-    } catch (e: any) {
-      toast("error", e?.message || "Network error");
-    } finally {
-      setLoading(false);
+    if (!res.ok) {
+      toast("error", json?.message || "Failed to fetch drafts");
+      setRows([]);
+      return;
     }
+
+    const drafts = Array.isArray(json?.data?.posts) ? json.data.posts : [];
+    setRows(drafts);
+  } catch (e: any) {
+    toast("error", e?.message || "Network error");
+    setRows([]); // ✅ important
+  } finally {
+    setLoading(false);
   }
+}
+
+
 
   React.useEffect(() => {
     fetchPostsAndFilterDrafts();

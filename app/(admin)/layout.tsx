@@ -1,5 +1,5 @@
 import Providers from "@/app/providers";
-import AdminShell from "@/app/components/admin/AdminShell";
+import AdminShell from "../components/admin/common/AdminShell";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -8,3 +8,4 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     </Providers>
   );
 }
+  
