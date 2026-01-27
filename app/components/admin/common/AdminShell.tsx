@@ -2,7 +2,7 @@ import { Box } from "@mui/material";
 import Topbar from "./Topbar";
 import Sidebar from "./Sidebar";
 
-const TOPBAR_HEIGHT = 72;
+const TOPBAR_HEIGHT = 72; 
 const SIDEBAR_WIDTH = 260;
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
