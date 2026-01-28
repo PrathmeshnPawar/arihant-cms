@@ -1,12 +1,5 @@
 import Link from "next/link";
-import {
-  Box,
-  Typography,
-  Chip,
-  Divider,
-  Paper,
-  Stack,
-} from "@mui/material";
+import { Box, Typography, Chip, Divider, Paper, Stack } from "@mui/material";
 import { formatDate, readingTime } from "../../../lib/utils/blogformat";
 import { getBaseUrl } from "@/app/lib/utils/baseUrl";
 import type { Metadata } from "next";
@@ -14,12 +7,42 @@ import { resolvePostSEO } from "@/app/lib/utils/seo";
 
 export const dynamic = "force-dynamic";
 
-async function getPost(slug: string) {
-  const baseUrl = await getBaseUrl();
-  const res = await fetch(`${baseUrl}/api/public/posts/${slug}`, {
-    cache: "no-store",
-  });
-  return res.json();
+// async function getPost(slug: string) {
+//   const baseUrl = await getBaseUrl();
+//   const res = await fetch(`${baseUrl}/api/public/posts/${slug}`, {
+//     cache: "no-store",
+//   });
+//   return res.json();
+// }
+
+async function getPost(slug: string, retries = 2) {
+  try {
+    const baseUrl = await getBaseUrl();
+
+    const res = await fetch(`${baseUrl}/api/public/posts/${slug}`, {
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      throw new Error(`Failed to fetch posts: ${res.status}`);
+    }
+
+    const json = await res.json();
+    return json;
+  } catch (err) {
+    if (retries > 0) {
+      const baseDelay = 500;
+      const attempt = 3 - retries;
+      const delay = Math.max(baseDelay, attempt * baseDelay);
+
+      await new Promise((r) => setTimeout(r, delay));
+      return getPost(slug, retries - 1);
+    }
+
+    // ❌ do NOT fake empty posts
+    console.error("getPosts failed after retries:", err);
+    return null;
+  }
 }
 
 export async function generateMetadata({
@@ -159,8 +182,7 @@ export default async function BlogPostPage({
               mb: 4,
               p: 3,
               borderRadius: 3,
-              background:
-                "linear-gradient(180deg, #f8fafc, #ffffff)",
+              background: "linear-gradient(180deg, #f8fafc, #ffffff)",
               borderLeft: "4px solid",
               borderColor: "primary.main",
             }}
@@ -221,9 +243,7 @@ export default async function BlogPostPage({
         <Divider sx={{ my: 6 }} />
 
         <Link href="/blog" style={{ textDecoration: "none" }}>
-          <Typography sx={{ fontWeight: 900 }}>
-            ← Back to Blog
-          </Typography>
+          <Typography sx={{ fontWeight: 900 }}>← Back to Blog</Typography>
         </Link>
       </Box>
     </Box>

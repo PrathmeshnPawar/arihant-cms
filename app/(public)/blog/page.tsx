@@ -8,9 +8,9 @@ import {
   Divider,
   Container,
   Button,
- // Use this import for stability
+  // Use this import for stability
 } from "@mui/material";
-import   Grid  from "@mui/material/Grid";
+import Grid from "@mui/material/Grid";
 
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { formatDate, readingTime } from "../../lib/utils/blogformat";
@@ -18,15 +18,33 @@ import { getBaseUrl } from "@/app/lib/utils/baseUrl";
 
 export const dynamic = "force-dynamic";
 
-async function getPosts() {
+async function getPosts(retries = 2) {
   try {
     const baseUrl = await getBaseUrl();
+
     const res = await fetch(`${baseUrl}/api/public/posts?limit=20`, {
-      cache: "no-store"
+      cache: "no-store",
     });
-    return res.ok ? res.json() : { data: { posts: [] } };
-  } catch {
-    return { data: { posts: [] } };
+
+    if (!res.ok) {
+      throw new Error(`Failed to fetch posts: ${res.status}`);
+    }
+
+    const json = await res.json();
+    return json;
+  } catch (err) {
+    if (retries > 0) {
+      const baseDelay = 500;
+      const attempt = 3 - retries;
+      const delay = Math.max(baseDelay, attempt * baseDelay);
+
+      await new Promise((r) => setTimeout(r, delay));
+      return getPosts(retries - 1);
+    }
+
+    // ❌ do NOT fake empty posts
+    console.error("getPosts failed after retries:", err);
+    return null;
   }
 }
 
@@ -37,13 +55,7 @@ const clamp = (lines: number) => ({
   WebkitBoxOrient: "vertical" as const,
 });
 
-const SectionHeader = ({
-  title,
-  href,
-}: {
-  title: string;
-  href?: string;
-}) => (
+const SectionHeader = ({ title, href }: { title: string; href?: string }) => (
   <Stack
     direction="row"
     justifyContent="space-between"
@@ -71,8 +83,6 @@ const SectionHeader = ({
   </Stack>
 );
 
-
-
 export default async function BlogPage() {
   const json = await getPosts();
   const posts = json?.data?.posts || [];
@@ -92,8 +102,18 @@ export default async function BlogPage() {
           </Typography>
 
           {trendingPost && (
-            <Link href={`/blog/${trendingPost.slug}`} style={{ textDecoration: "none" }}>
-              <Box sx={{ position: "relative", borderRadius: 4, overflow: "hidden", mb: 2 }}>
+            <Link
+              href={`/blog/${trendingPost.slug}`}
+              style={{ textDecoration: "none" }}
+            >
+              <Box
+                sx={{
+                  position: "relative",
+                  borderRadius: 4,
+                  overflow: "hidden",
+                  mb: 2,
+                }}
+              >
                 <Box
                   sx={{
                     height: 400,
@@ -104,14 +124,27 @@ export default async function BlogPage() {
                   }}
                 />
                 <Box sx={{ py: 2 }}>
-                  <Typography variant="caption" color="primary" fontWeight={800}>
+                  <Typography
+                    variant="caption"
+                    color="primary"
+                    fontWeight={800}
+                  >
                     TRENDING
                   </Typography>
-                  <Typography variant="h4" fontWeight={900} sx={{ mt: 1, color: "#020617", letterSpacing: -0.5 }}>
+                  <Typography
+                    variant="h4"
+                    fontWeight={900}
+                    sx={{ mt: 1, color: "#020617", letterSpacing: -0.5 }}
+                  >
                     {trendingPost.title}
                   </Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
-                    {readingTime(trendingPost.content)} • {formatDate(trendingPost.publishedAt)}
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ mt: 1, display: "block" }}
+                  >
+                    {readingTime(trendingPost.content)} •{" "}
+                    {formatDate(trendingPost.publishedAt)}
                   </Typography>
                 </Box>
               </Box>
@@ -125,20 +158,38 @@ export default async function BlogPage() {
           </Typography>
           <Stack spacing={3}>
             {sidePosts.map((p: any) => (
-              <Box key={p._id} sx={{ pb: 2, borderBottom: "1px solid", borderColor: "divider" }}>
+              <Box
+                key={p._id}
+                sx={{
+                  pb: 2,
+                  borderBottom: "1px solid",
+                  borderColor: "divider",
+                }}
+              >
                 <Typography variant="caption" color="text.disabled">
                   {readingTime(p.content)}
                 </Typography>
-                <Link href={`/blog/${p.slug}`} style={{ textDecoration: "none" }}>
+                <Link
+                  href={`/blog/${p.slug}`}
+                  style={{ textDecoration: "none" }}
+                >
                   <Typography
                     variant="subtitle1"
                     fontWeight={700}
-                    sx={{ color: "#020617", "&:hover": { color: "primary.main" }, ...clamp(2) }}
+                    sx={{
+                      color: "#020617",
+                      "&:hover": { color: "primary.main" },
+                      ...clamp(2),
+                    }}
                   >
                     {p.title}
                   </Typography>
                 </Link>
-                <Chip label={p.category?.name} size="small" sx={{ height: 20, fontSize: 10, mt: 1, fontWeight: 700 }} />
+                <Chip
+                  label={p.category?.name}
+                  size="small"
+                  sx={{ height: 20, fontSize: 10, mt: 1, fontWeight: 700 }}
+                />
               </Box>
             ))}
           </Stack>
@@ -151,7 +202,14 @@ export default async function BlogPage() {
         {latestStories.map((p: any) => (
           <Grid size={{ xs: 12, sm: 4 }} key={p._id}>
             <Link href={`/blog/${p.slug}`} style={{ textDecoration: "none" }}>
-              <Paper elevation={0} sx={{ borderRadius: 3, overflow: "hidden", bgcolor: "transparent" }}>
+              <Paper
+                elevation={0}
+                sx={{
+                  borderRadius: 3,
+                  overflow: "hidden",
+                  bgcolor: "transparent",
+                }}
+              >
                 <Box
                   sx={{
                     height: 180,
@@ -164,7 +222,11 @@ export default async function BlogPage() {
                 <Typography variant="caption" color="primary" fontWeight={700}>
                   {p.category?.name}
                 </Typography>
-                <Typography variant="subtitle1" fontWeight={800} sx={{ color: "#020617", mt: 0.5, ...clamp(2) }}>
+                <Typography
+                  variant="subtitle1"
+                  fontWeight={800}
+                  sx={{ color: "#020617", mt: 0.5, ...clamp(2) }}
+                >
                   {p.title}
                 </Typography>
                 <Typography variant="caption" color="text.disabled">
