@@ -1,5 +1,6 @@
 "use client";
 
+import { readingTime } from "@/app/lib/utils/blogformat";
 import { Card, CardContent, Typography, Box, Chip } from "@mui/material";
 
 export default function PostCard({ post }: { post: any }) {
@@ -38,9 +39,17 @@ export default function PostCard({ post }: { post: any }) {
           {post.status && <Chip size="small" label={post.status} />}
         </Box>
 
-        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
-          {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString() : ""}
-        </Typography>
+        <Typography
+  variant="caption"
+  color="text.secondary"
+  sx={{ mt: 1, display: "block" }}
+>
+  {readingTime(post.content)}
+  {post.publishedAt && (
+    <> • {new Date(post.publishedAt).toLocaleDateString()}</>
+  )}
+</Typography>
+
       </CardContent>
     </Card>
   );
