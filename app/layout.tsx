@@ -11,6 +11,9 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: "Arihant CMS",
   description: "CMS Blogging Website",
+  verification: {
+    google: "0jKQWlLcBnOUF2p__g2G_GlZ3AXWyNRbA42gqdIPuJo",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
