@@ -1,24 +1,27 @@
 export interface PostSEO {
-  metaTitle?: string;
-  metaDescription?: string;
-  canonicalUrl?: string;
-  ogTitle?: string;
-  ogDescription?: string;
+  metaTitle?: string
+  metaDescription?: string
+  canonicalUrl?: string
+  ogTitle?: string
+  ogDescription?: string
   ogImage?: {
-    url: string;
-  } | null;
-  robotsIndex?: boolean;
-  robotsFollow?: boolean;
+    url: string
+  }
+  robotsIndex?: boolean
+  robotsFollow?: boolean
 }
 
 export interface SEOResolvablePost {
-  title: string;
-  excerpt?: string;
-  seo?: PostSEO;
+  title: string
+  excerpt?: string
+  seo?: PostSEO
 
-  // ✅ used as OG fallback
+  // ✅ Added proper Date/string types
+  publishedAt?: Date | string
+  createdAt?: Date | string
+
+  // ✅ Used as OG fallback
   coverImage?: {
-    url: string;
-  };
-
+    url: string
+  }
 }
