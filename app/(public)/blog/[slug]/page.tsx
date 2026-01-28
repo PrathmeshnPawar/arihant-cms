@@ -1,38 +1,38 @@
 // 1. Move ALL imports to the top
-import Link from "next/link";
-import { Box, Typography, Chip, Divider, Paper, Stack } from "@mui/material";
-import { formatDate, readingTime } from "../../../lib/utils/blogformat";
-import { getBaseUrl } from "@/app/lib/utils/baseUrl";
-import type { Metadata } from "next";
-import { resolvePostSEO } from "@/app/lib/utils/seo";
-import { connectDB } from "@/app/lib/db/connect";
-import { Post } from "@/app/models/Post";
+import Link from 'next/link'
+import { Box, Typography, Chip, Divider, Paper, Stack } from '@mui/material'
+import { formatDate, readingTime } from '../../../lib/utils/blogformat'
+import { getBaseUrl } from '@/app/lib/utils/baseUrl'
+import type { Metadata } from 'next'
+import { resolvePostSEO } from '@/app/lib/utils/seo'
+import { connectDB } from '@/app/lib/db/connect'
+import { Post } from '@/app/models/Post'
+import ShareButtons from '@/app/components/blog/ShareButtons'
 
 // Force models to register
-import "@/app/models/Media";
-import "@/app/models/Category";
-import "@/app/models/Tag";
-import ShareButtons from "@/app/components/blog/ShareButtons";
+import '@/app/models/Media'
+import '@/app/models/Category'
+import '@/app/models/Tag'
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic'
 
 // 2. The getPost function
 async function getPost(slug: string) {
   try {
-    await connectDB();
-    const post = await Post.findOne({ slug, status: "published" })
-      .populate("category", "name slug")
-      .populate("tags", "name slug")
-      .populate("coverImage", "url originalName mimeType")
-      .populate("gallery", "url originalName mimeType")
-      .populate("seo.ogImage", "url originalName mimeType")
-      .lean();
+    await connectDB()
+    const post = await Post.findOne({ slug, status: 'published' })
+      .populate('category', 'name slug')
+      .populate('tags', 'name slug')
+      .populate('coverImage', 'url originalName mimeType')
+      .populate('gallery', 'url originalName mimeType')
+      .populate('seo.ogImage', 'url originalName mimeType')
+      .lean()
 
-    if (!post) return null;
-    return { success: true, data: post };
+    if (!post) return null
+    return { success: true, data: post }
   } catch (err) {
-    console.error("❌ getPost direct DB error:", err);
-    return null;
+    console.error('❌ getPost direct DB error:', err)
+    return null
   }
 }
 
@@ -41,46 +41,68 @@ async function getPost(slug: string) {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string }>
 }): Promise<Metadata> {
-  const { slug } = await params;
-  const json = await getPost(slug);
+  const { slug } = await params
+  const json = await getPost(slug)
 
-  if (!json?.success) {
-    return {
-      title: "Post not found | Arihant CMS",
-      robots: { index: false, follow: false },
-    };
+  if (!json?.success) return { title: 'Not Found' }
+
+  const post = json.data
+  const baseUrl = await getBaseUrl()
+  const ogImage = post.coverImage?.url || '/default-og.png' // Fallback image
+
+  return {
+    title: post.title,
+    description: post.excerpt,
+    openGraph: {
+      title: post.title,
+      description: post.excerpt,
+      url: `${baseUrl}/blog/${slug}`,
+      siteName: 'Arihant CMS',
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: post.title,
+        },
+      ],
+      type: 'article',
+      publishedTime: post.publishedAt || post.createdAt,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: post.title,
+      description: post.excerpt,
+      images: [ogImage],
+    },
   }
-
-  const baseUrl = await getBaseUrl();
-  const canonical = `${baseUrl}/blog/${slug}`;
-  return resolvePostSEO(json.data, { canonical });
 }
 
 export default async function BlogPostPage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string }>
 }) {
-  const { slug } = await params;
-  const json = await getPost(slug);
+  const { slug } = await params
+  const json = await getPost(slug)
 
   if (!json?.success) {
     return (
-      <Box sx={{ py: 8, textAlign: "center" }}>
+      <Box sx={{ py: 8, textAlign: 'center' }}>
         <Typography variant="h4" fontWeight={900}>
           Post not found
         </Typography>
       </Box>
-    );
+    )
   }
 
-  const post = json.data;
-  const cover = post.coverImage?.url || "";
-  const baseUrl = getBaseUrl();
-// This ensures no double slashes regardless of how baseUrl is formatted
-const currentUrl = `${baseUrl.replace(/\/$/, "")}/blog/${slug}`;
+  const post = json.data
+  const cover = post.coverImage?.url || ''
+  const baseUrl = getBaseUrl()
+  // This ensures no double slashes regardless of how baseUrl is formatted
+  const currentUrl = `${baseUrl.replace(/\/$/, '')}/blog/${slug}`
 
   return (
     <Box>
@@ -89,36 +111,36 @@ const currentUrl = `${baseUrl.replace(/\/$/, "")}/blog/${slug}`;
         sx={{
           mb: 6,
           borderRadius: 5,
-          overflow: "hidden",
-          position: "relative",
+          overflow: 'hidden',
+          position: 'relative',
           background: cover
             ? `url(${cover})`
-            : "linear-gradient(135deg, #020617, #0f172a)",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
+            : 'linear-gradient(135deg, #020617, #0f172a)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
           minHeight: 420,
-          display: "flex",
-          alignItems: "flex-end",
+          display: 'flex',
+          alignItems: 'flex-end',
         }}
       >
         {/* Overlay */}
         <Box
           sx={{
-            position: "absolute",
+            position: 'absolute',
             inset: 0,
             background:
-              "linear-gradient(to top, rgba(2,6,23,.9), rgba(2,6,23,.2))",
+              'linear-gradient(to top, rgba(2,6,23,.9), rgba(2,6,23,.2))',
           }}
         />
 
         {/* Hero Content */}
         <Box
           sx={{
-            position: "relative",
+            position: 'relative',
             zIndex: 1,
             p: { xs: 3, md: 5 },
             maxWidth: 820,
-            color: "#fff",
+            color: '#fff',
           }}
         >
           <Stack direction="row" spacing={1} mb={1} flexWrap="wrap">
@@ -127,16 +149,16 @@ const currentUrl = `${baseUrl.replace(/\/$/, "")}/blog/${slug}`;
                 label={post.category.name}
                 size="small"
                 sx={{
-                  bgcolor: "primary.main",
-                  color: "#fff",
+                  bgcolor: 'primary.main',
+                  color: '#fff',
                   fontWeight: 800,
                 }}
               />
             )}
             <Chip
               size="small"
-              label={readingTime(post.content || "")}
-              sx={{ bgcolor: "rgba(255,255,255,.15)", color: "#fff" }}
+              label={readingTime(post.content || '')}
+              sx={{ bgcolor: 'rgba(255,255,255,.15)', color: '#fff' }}
             />
           </Stack>
 
@@ -155,9 +177,9 @@ const currentUrl = `${baseUrl.replace(/\/$/, "")}/blog/${slug}`;
       </Box>
 
       {/* ===== ARTICLE BODY ===== */}
-      <Box sx={{ maxWidth: 820, mx: "auto" }}>
+      <Box sx={{ maxWidth: 820, mx: 'auto' }}>
         {/* Tags */}
-        <Box sx={{ mb: 3, display: "flex", gap: 1, flexWrap: "wrap" }}>
+        <Box sx={{ mb: 3, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
           {(post.tags || []).map((t: any) => (
             <Chip
               key={t._id}
@@ -178,16 +200,16 @@ const currentUrl = `${baseUrl.replace(/\/$/, "")}/blog/${slug}`;
               mb: 4,
               p: 3,
               borderRadius: 3,
-              background: "linear-gradient(180deg, #f8fafc, #ffffff)",
-              borderLeft: "4px solid",
-              borderColor: "primary.main",
+              background: 'linear-gradient(180deg, #f8fafc, #ffffff)',
+              borderLeft: '4px solid',
+              borderColor: 'primary.main',
             }}
           >
             <Typography
               sx={{
                 fontSize: 18,
                 lineHeight: 1.9,
-                color: "text.secondary",
+                color: 'text.secondary',
               }}
             >
               {post.excerpt}
@@ -198,53 +220,52 @@ const currentUrl = `${baseUrl.replace(/\/$/, "")}/blog/${slug}`;
         {/* Content */}
         <Box
           sx={{
-            "& p": {
+            '& p': {
               fontSize: 17,
               lineHeight: 2.05,
               mb: 2.5,
             },
-            "& h2": {
+            '& h2': {
               mt: 6,
               mb: 2,
               fontWeight: 900,
               letterSpacing: -0.4,
             },
-            "& h3": {
+            '& h3': {
               mt: 4,
               mb: 1.5,
               fontWeight: 900,
             },
-            "& ul": { pl: 3, mb: 3 },
-            "& li": { mb: 1 },
-            "& img": {
-              maxWidth: "100%",
+            '& ul': { pl: 3, mb: 3 },
+            '& li': { mb: 1 },
+            '& img': {
+              maxWidth: '100%',
               borderRadius: 3,
               my: 3,
-              boxShadow: "0 15px 40px rgba(2,6,23,.15)",
+              boxShadow: '0 15px 40px rgba(2,6,23,.15)',
             },
-            "& blockquote": {
-              borderLeft: "4px solid #020617",
+            '& blockquote': {
+              borderLeft: '4px solid #020617',
               pl: 3,
               py: 1,
               my: 3,
-              color: "text.secondary",
-              fontStyle: "italic",
-              backgroundColor: "#f8fafc",
+              color: 'text.secondary',
+              fontStyle: 'italic',
+              backgroundColor: '#f8fafc',
             },
           }}
           dangerouslySetInnerHTML={{ __html: post.content }}
         />
-          {/* SHARE FEATURE SECTION */}
+        {/* SHARE FEATURE SECTION */}
         <ShareButtons url={currentUrl} title={post.title} />
-
 
         {/* Footer */}
         <Divider sx={{ my: 6 }} />
 
-        <Link href="/blog" style={{ textDecoration: "none" }}>
+        <Link href="/blog" style={{ textDecoration: 'none' }}>
           <Typography sx={{ fontWeight: 900 }}>← Back to Blog</Typography>
         </Link>
       </Box>
     </Box>
-  );
+  )
 }
