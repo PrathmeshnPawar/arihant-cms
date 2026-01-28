@@ -11,61 +11,45 @@ export function resolvePostSEO(
 ): Metadata {
   const seo = post.seo ?? {}
 
-  // 1. Determine Title & Description
-  const finalTitle = seo.metaTitle || post.title
-  const finalDescription = seo.metaDescription || post.excerpt
-
-  // 2. Resolve Image (Ensure absolute URL for WhatsApp)
+  // 1. Ensure absolute image URL
   const featuredImage =
     seo.ogImage?.url || post.coverImage?.url || '/default-og-image.png'
 
-  // 3. CRITICAL FIX: Safe Date Serialization
-  // We extract the date and force it into an ISO string or null
-  const rawDate = post.publishedAt || post.createdAt
-  let formattedDate: string | undefined = undefined
-
-  if (rawDate) {
-    // If it's a MongoDB $date object from your JSON
-    if (typeof rawDate === 'object' && '$date' in rawDate) {
-      formattedDate = new Date(rawDate.$date as string).toISOString()
-    }
-    // If it's a standard Date object
-    else if (rawDate instanceof Date) {
-      formattedDate = rawDate.toISOString()
-    }
-    // If it's already a string
-    else if (typeof rawDate === 'string') {
-      formattedDate = rawDate
-    }
-  }
+  // 2. Fix the [object Object] bug for publishedTime
+  const publishedTime = post.publishedAt || post.createdAt
+  const formattedDate =
+    publishedTime instanceof Date
+      ? publishedTime.toISOString()
+      : typeof publishedTime === 'string'
+      ? publishedTime
+      : undefined
 
   return {
-    title: finalTitle,
-    description: finalDescription,
+    title: seo.metaTitle || post.title,
+    description: seo.metaDescription || post.excerpt,
     alternates: {
-      canonical: options?.canonical || seo.canonicalUrl,
+      canonical: seo.canonicalUrl || options?.canonical,
     },
     openGraph: {
-      title: seo.ogTitle || finalTitle,
-      description: seo.ogDescription || finalDescription,
+      title: seo.ogTitle || seo.metaTitle || post.title,
+      description: seo.ogDescription || seo.metaDescription || post.excerpt,
       url: options?.url || options?.canonical,
       siteName: 'Arihant CMS',
       type: 'article',
-      // This ensures the inspector shows a string, not [object Object]
-      publishedTime: formattedDate,
+      publishedTime: formattedDate, // Now sends a clean string, not an object
       images: [
         {
           url: featuredImage,
           width: 1200,
           height: 630,
-          alt: finalTitle,
+          alt: seo.metaTitle || post.title,
         },
       ],
     },
     twitter: {
       card: 'summary_large_image',
-      title: seo.ogTitle || finalTitle,
-      description: seo.ogDescription || finalDescription,
+      title: seo.ogTitle || seo.metaTitle || post.title,
+      description: seo.ogDescription || seo.metaDescription || post.excerpt,
       images: [featuredImage],
     },
   }
