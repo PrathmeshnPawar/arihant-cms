@@ -11,33 +11,48 @@ export function resolvePostSEO(
 ): Metadata {
   const seo = post.seo ?? {}
 
-  // 1. Define single sources of truth
+  // 1. Determine Title & Description
   const finalTitle = seo.metaTitle || post.title
   const finalDescription = seo.metaDescription || post.excerpt
-  const finalUrl = options?.url || options?.canonical || seo.canonicalUrl
 
-  // 2. Resolve Image (Ensure absolute URL)
+  // 2. Resolve Image (Ensure absolute URL for WhatsApp)
   const featuredImage =
     seo.ogImage?.url || post.coverImage?.url || '/default-og-image.png'
 
-  // 3. Resolve Date (Ensures string output for crawlers)
-  const dateValue = post.publishedAt || post.createdAt
-  const publishedTime =
-    dateValue instanceof Date ? dateValue.toISOString() : (dateValue as string) // Cast because we know it's not an object anymore
+  // 3. CRITICAL FIX: Safe Date Serialization
+  // We extract the date and force it into an ISO string or null
+  const rawDate = post.publishedAt || post.createdAt
+  let formattedDate: string | undefined = undefined
+
+  if (rawDate) {
+    // If it's a MongoDB $date object from your JSON
+    if (typeof rawDate === 'object' && '$date' in rawDate) {
+      formattedDate = new Date(rawDate.$date as string).toISOString()
+    }
+    // If it's a standard Date object
+    else if (rawDate instanceof Date) {
+      formattedDate = rawDate.toISOString()
+    }
+    // If it's already a string
+    else if (typeof rawDate === 'string') {
+      formattedDate = rawDate
+    }
+  }
 
   return {
     title: finalTitle,
     description: finalDescription,
     alternates: {
-      canonical: finalUrl,
+      canonical: options?.canonical || seo.canonicalUrl,
     },
     openGraph: {
       title: seo.ogTitle || finalTitle,
       description: seo.ogDescription || finalDescription,
-      url: finalUrl,
+      url: options?.url || options?.canonical,
       siteName: 'Arihant CMS',
       type: 'article',
-      publishedTime,
+      // This ensures the inspector shows a string, not [object Object]
+      publishedTime: formattedDate,
       images: [
         {
           url: featuredImage,
