@@ -5,48 +5,23 @@ import {
   Paper,
   Chip,
   Stack,
-  Divider,
   Container,
   Button,
-  // Use this import for stability
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
-
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+
+// Core Logic Imports
+import { connectDB } from "@/app/lib/db/connect";
+import { Post } from "@/app/models/Post";
 import { formatDate, readingTime } from "../../lib/utils/blogformat";
-import { getBaseUrl } from "@/app/lib/utils/baseUrl";
+
+// Model registration to ensure .populate() works correctly
+import "@/app/models/Media";
+import "@/app/models/Category";
+import "@/app/models/Tag";
 
 export const dynamic = "force-dynamic";
-
-async function getPosts(retries = 2) {
-  try {
-    const baseUrl = await getBaseUrl();
-
-    const res = await fetch(`${baseUrl}/api/public/posts?limit=20`, {
-      cache: "no-store",
-    });
-
-    if (!res.ok) {
-      throw new Error(`Failed to fetch posts: ${res.status}`);
-    }
-
-    const json = await res.json();
-    return json;
-  } catch (err) {
-    if (retries > 0) {
-      const baseDelay = 500;
-      const attempt = 3 - retries;
-      const delay = Math.max(baseDelay, attempt * baseDelay);
-
-      await new Promise((r) => setTimeout(r, delay));
-      return getPosts(retries - 1);
-    }
-
-    // ❌ do NOT fake empty posts
-    console.error("getPosts failed after retries:", err);
-    return null;
-  }
-}
 
 const clamp = (lines: number) => ({
   overflow: "hidden",
@@ -84,13 +59,29 @@ const SectionHeader = ({ title, href }: { title: string; href?: string }) => (
 );
 
 export default async function BlogPage() {
-  const json = await getPosts();
-  const posts = json?.data?.posts || [];
+  // 1. DIRECT DATABASE ACCESS
+  // This happens in milliseconds and avoids all networking timeouts.
+  await connectDB();
+  
+  const posts = await Post.find({ status: "published" })
+    .sort({ publishedAt: -1, createdAt: -1 })
+    .limit(20)
+    .populate("category", "name slug")
+    .populate("coverImage", "url")
+    .lean();
 
+  if (!posts || posts.length === 0) {
+    return (
+      <Container sx={{ py: 8, textAlign: "center" }}>
+        <Typography variant="h5">No stories found yet.</Typography>
+      </Container>
+    );
+  }
+
+  // 2. DATA DISTRIBUTION
   const trendingPost = posts[0];
   const sidePosts = posts.slice(1, 5);
   const latestStories = posts.slice(5, 8);
-  const stockStories = posts.slice(8, 12);
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -106,14 +97,7 @@ export default async function BlogPage() {
               href={`/blog/${trendingPost.slug}`}
               style={{ textDecoration: "none" }}
             >
-              <Box
-                sx={{
-                  position: "relative",
-                  borderRadius: 4,
-                  overflow: "hidden",
-                  mb: 2,
-                }}
-              >
+              <Box sx={{ position: "relative", borderRadius: 4, overflow: "hidden", mb: 2 }}>
                 <Box
                   sx={{
                     height: 400,
@@ -124,27 +108,18 @@ export default async function BlogPage() {
                   }}
                 />
                 <Box sx={{ py: 2 }}>
-                  <Typography
-                    variant="caption"
-                    color="primary"
-                    fontWeight={800}
-                  >
+                  <Typography variant="caption" color="primary" fontWeight={800}>
                     TRENDING
                   </Typography>
                   <Typography
                     variant="h4"
-                    fontWeight={900}
+                    fontWeight={950}
                     sx={{ mt: 1, color: "#020617", letterSpacing: -0.5 }}
                   >
                     {trendingPost.title}
                   </Typography>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ mt: 1, display: "block" }}
-                  >
-                    {readingTime(trendingPost.content)} •{" "}
-                    {formatDate(trendingPost.publishedAt)}
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
+                    {readingTime(trendingPost.content || "")} • {formatDate(trendingPost.publishedAt || trendingPost.createdAt)}
                   </Typography>
                 </Box>
               </Box>
@@ -158,21 +133,11 @@ export default async function BlogPage() {
           </Typography>
           <Stack spacing={3}>
             {sidePosts.map((p: any) => (
-              <Box
-                key={p._id}
-                sx={{
-                  pb: 2,
-                  borderBottom: "1px solid",
-                  borderColor: "divider",
-                }}
-              >
+              <Box key={p._id} sx={{ pb: 2, borderBottom: "1px solid", borderColor: "divider" }}>
                 <Typography variant="caption" color="text.disabled">
-                  {readingTime(p.content)}
+                  {readingTime(p.content || "")}
                 </Typography>
-                <Link
-                  href={`/blog/${p.slug}`}
-                  style={{ textDecoration: "none" }}
-                >
+                <Link href={`/blog/${p.slug}`} style={{ textDecoration: "none" }}>
                   <Typography
                     variant="subtitle1"
                     fontWeight={700}
@@ -204,17 +169,13 @@ export default async function BlogPage() {
             <Link href={`/blog/${p.slug}`} style={{ textDecoration: "none" }}>
               <Paper
                 elevation={0}
-                sx={{
-                  borderRadius: 3,
-                  overflow: "hidden",
-                  bgcolor: "transparent",
-                }}
+                sx={{ borderRadius: 3, overflow: "hidden", bgcolor: "transparent" }}
               >
                 <Box
                   sx={{
                     height: 180,
                     borderRadius: 3,
-                    backgroundImage: `url(${p.coverImage?.url})`,
+                    backgroundImage: `url(${p.coverImage?.url || ""})`,
                     backgroundSize: "cover",
                     mb: 2,
                   }}
@@ -230,7 +191,7 @@ export default async function BlogPage() {
                   {p.title}
                 </Typography>
                 <Typography variant="caption" color="text.disabled">
-                  {readingTime(p.content)} • {formatDate(p.publishedAt)}
+                  {readingTime(p.content || "")} • {formatDate(p.publishedAt || p.createdAt)}
                 </Typography>
               </Paper>
             </Link>

@@ -1,49 +1,41 @@
+// 1. Move ALL imports to the top
 import Link from "next/link";
 import { Box, Typography, Chip, Divider, Paper, Stack } from "@mui/material";
 import { formatDate, readingTime } from "../../../lib/utils/blogformat";
 import { getBaseUrl } from "@/app/lib/utils/baseUrl";
 import type { Metadata } from "next";
 import { resolvePostSEO } from "@/app/lib/utils/seo";
+import { connectDB } from "@/app/lib/db/connect";
+import { Post } from "@/app/models/Post";
+
+// Force models to register
+import "@/app/models/Media";
+import "@/app/models/Category";
+import "@/app/models/Tag";
 
 export const dynamic = "force-dynamic";
 
-// async function getPost(slug: string) {
-//   const baseUrl = await getBaseUrl();
-//   const res = await fetch(`${baseUrl}/api/public/posts/${slug}`, {
-//     cache: "no-store",
-//   });
-//   return res.json();
-// }
-
-async function getPost(slug: string, retries = 2) {
+// 2. The getPost function
+async function getPost(slug: string) {
   try {
-    const baseUrl = await getBaseUrl();
+    await connectDB();
+    const post = await Post.findOne({ slug, status: "published" })
+      .populate("category", "name slug")
+      .populate("tags", "name slug")
+      .populate("coverImage", "url originalName mimeType")
+      .populate("gallery", "url originalName mimeType")
+      .populate("seo.ogImage", "url originalName mimeType")
+      .lean();
 
-    const res = await fetch(`${baseUrl}/api/public/posts/${slug}`, {
-      cache: "no-store",
-    });
-
-    if (!res.ok) {
-      throw new Error(`Failed to fetch posts: ${res.status}`);
-    }
-
-    const json = await res.json();
-    return json;
+    if (!post) return null;
+    return { success: true, data: post };
   } catch (err) {
-    if (retries > 0) {
-      const baseDelay = 500;
-      const attempt = 3 - retries;
-      const delay = Math.max(baseDelay, attempt * baseDelay);
-
-      await new Promise((r) => setTimeout(r, delay));
-      return getPost(slug, retries - 1);
-    }
-
-    // ❌ do NOT fake empty posts
-    console.error("getPosts failed after retries:", err);
+    console.error("❌ getPost direct DB error:", err);
     return null;
   }
 }
+
+// 3. Metadata and Page components follow...
 
 export async function generateMetadata({
   params,

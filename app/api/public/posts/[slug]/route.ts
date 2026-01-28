@@ -2,12 +2,8 @@ import { connectDB } from "@/app/lib/db/connect";
 import { ok, fail } from "@/app/lib/response";
 import { Post } from "@/app/models/Post";
 
-type Ctx = { params: Promise<{ slug: string }> };
+type Ctx = { params: Promise<{ slug: string }> }; 
 
-/**
- * GET /api/public/posts/:slug
- * - returns ONLY published post by slug
- */
 export async function GET(_: Request, ctx: Ctx) {
   try {
     await connectDB();

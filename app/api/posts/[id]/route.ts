@@ -6,28 +6,27 @@ import { Post } from "@/app/models/Post";
 import "@/app/models/Media";
 import "@/app/models/Category";
 import "@/app/models/Tag";
+import { PostService } from "@/app/services/post.service";
 
-type Ctx = { params: Promise<{ slug: string }> };
+// app/api/posts/[id]/route.ts
+
+// 1. Update the Type to match the folder name [id]
+type Ctx = { params: Promise<{ id: string }> }; 
 
 export async function GET(_: Request, ctx: Ctx) {
   try {
     await connectDB();
-    const { slug } = await ctx.params;
 
-    // Use findOne with the slug and ensure it's published
-    const post = await Post.findOne({ slug, status: "published" })
-      .populate("category", "name slug")
-      .populate("tags", "name slug")
-      .populate("coverImage", "url originalName")
-      .lean();
+    // 2. Destructure 'id' (NOT slug)
+    const { id } = await ctx.params; 
 
-    if (!post) {
-      return fail("Post not found", 404);
-    }
+    // 3. Pass that 'id' to your service
+    const post = await PostService.findByIdOrSlug(id); 
+    
+    if (!post) return fail("Post not found", 404);
 
-    return ok(post, "Post fetched successfully");
+    return ok(post);
   } catch (err: any) {
-    console.error("❌ PUBLIC SLUG ERROR:", err);
     return fail("Failed to fetch post", 500, err?.message);
   }
 }
