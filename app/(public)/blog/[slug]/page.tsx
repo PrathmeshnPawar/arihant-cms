@@ -46,40 +46,22 @@ export async function generateMetadata({
   const { slug } = await params
   const json = await getPost(slug)
 
-  if (!json?.success) return { title: 'Not Found' }
+  // 1. Basic fallback if post isn't found
+  if (!json?.success) {
+    return {
+      title: 'Post not found | Arihant CMS',
+      robots: { index: false, follow: false },
+    }
+  }
 
   const post = json.data
   const baseUrl = await getBaseUrl()
-  const ogImage = post.coverImage?.url || '/default-og.png' // Fallback image
+  const canonical = `${baseUrl.replace(/\/$/, '')}/blog/${slug}`
 
-  return {
-    title: post.title,
-    description: post.excerpt,
-    openGraph: {
-      title: post.title,
-      description: post.excerpt,
-      url: `${baseUrl}/blog/${slug}`,
-      siteName: 'Arihant CMS',
-      images: [
-        {
-          url: ogImage,
-          width: 1200,
-          height: 630,
-          alt: post.title,
-        },
-      ],
-      type: 'article',
-      publishedTime: post.publishedAt || post.createdAt,
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: post.title,
-      description: post.excerpt,
-      images: [ogImage],
-    },
-  }
+  // 2. USE THE RESOLVER HERE ✅
+  // This will trigger your logs and fix the [object Object] date issue
+  return resolvePostSEO(post, { canonical })
 }
-
 export default async function BlogPostPage({
   params,
 }: {

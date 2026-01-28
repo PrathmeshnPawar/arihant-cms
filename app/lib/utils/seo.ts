@@ -11,45 +11,55 @@ export function resolvePostSEO(
 ): Metadata {
   const seo = post.seo ?? {}
 
-  // 1. Ensure absolute image URL
+  // 1. Determine Sources of Truth
+  const finalTitle = seo.metaTitle || post.title
+  const finalDescription = seo.metaDescription || post.excerpt
   const featuredImage =
     seo.ogImage?.url || post.coverImage?.url || '/default-og-image.png'
 
-  // 2. Fix the [object Object] bug for publishedTime
-  const publishedTime = post.publishedAt || post.createdAt
-  const formattedDate =
-    publishedTime instanceof Date
-      ? publishedTime.toISOString()
-      : typeof publishedTime === 'string'
-      ? publishedTime
-      : undefined
+  // 2. CRITICAL FIX: Sanitize the Date
+  const rawDate = post.publishedAt || post.createdAt
+  let publishedTime: string | undefined = undefined
+
+  if (rawDate) {
+    // Check if it's a standard Date object or a MongoDB-style date object
+    if (rawDate instanceof Date) {
+      publishedTime = rawDate.toISOString()
+    } else if (typeof rawDate === 'string') {
+      publishedTime = rawDate
+    } else if (typeof rawDate === 'object' && '$date' in (rawDate as any)) {
+      // Handles the MongoDB JSON format: { $date: "..." }
+      publishedTime = new Date((rawDate as any).$date).toISOString()
+    }
+  }
 
   return {
-    title: seo.metaTitle || post.title,
-    description: seo.metaDescription || post.excerpt,
+    title: finalTitle,
+    description: finalDescription,
     alternates: {
-      canonical: seo.canonicalUrl || options?.canonical,
+      canonical: options?.canonical || seo.canonicalUrl,
     },
     openGraph: {
-      title: seo.ogTitle || seo.metaTitle || post.title,
-      description: seo.ogDescription || seo.metaDescription || post.excerpt,
+      title: seo.ogTitle || finalTitle,
+      description: seo.ogDescription || finalDescription,
       url: options?.url || options?.canonical,
       siteName: 'Arihant CMS',
       type: 'article',
-      publishedTime: formattedDate, // Now sends a clean string, not an object
+      // Ensure this is a clean string, not [object Object]
+      publishedTime: publishedTime,
       images: [
         {
           url: featuredImage,
           width: 1200,
           height: 630,
-          alt: seo.metaTitle || post.title,
+          alt: finalTitle,
         },
       ],
     },
     twitter: {
       card: 'summary_large_image',
-      title: seo.ogTitle || seo.metaTitle || post.title,
-      description: seo.ogDescription || seo.metaDescription || post.excerpt,
+      title: seo.ogTitle || finalTitle,
+      description: seo.ogDescription || finalDescription,
       images: [featuredImage],
     },
   }
