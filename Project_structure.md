@@ -1,122 +1,230 @@
-my-cms-blog/
-├── src/
-│   ├── app/
-│   │   ├── (public)/                      # Public website routes
-│   │   │   ├── page.tsx                   # Home
-│   │   │   ├── blog/
-│   │   │   │   ├── page.tsx               # Blog list
-│   │   │   │   ├── [slug]/
-│   │   │   │   │   └── page.tsx           # Single post
-│   │   │   │   ├── category/
-│   │   │   │   │   └── [slug]/page.tsx
-│   │   │   │   ├── tag/
-│   │   │   │   │   └── [slug]/page.tsx
-│   │   │   ├── about/page.tsx
-│   │   │   ├── contact/page.tsx
-│   │   │   └── layout.tsx                 # Public layout (Header/Footer)
-│   │   │
-│   │   ├── (admin)/                       # Admin CMS routes
-│   │   │   ├── admin/
-│   │   │   │   ├── page.tsx               # Dashboard
-│   │   │   │   ├── login/page.tsx
-│   │   │   │   ├── posts/
-│   │   │   │   │   ├── page.tsx           # Posts list
-│   │   │   │   │   ├── new/page.tsx       # Create post
-│   │   │   │   │   └── [id]/edit/page.tsx # Edit post
-│   │   │   │   ├── categories/page.tsx
-│   │   │   │   ├── tags/page.tsx
-│   │   │   │   ├── users/page.tsx
-│   │   │   │   ├── media/page.tsx         # Media uploader/library
-│   │   │   │   ├── settings/page.tsx      # Website settings (SEO etc.)
-│   │   │   │   └── layout.tsx             # Admin layout (Sidebar)
-│   │   │
-│   │   ├── api/                           # Next.js route handlers (API)
-│   │   │   ├── auth/
-│   │   │   │   ├── login/route.ts
-│   │   │   │   ├── logout/route.ts
-│   │   │   │   └── refresh/route.ts
-│   │   │   ├── posts/
-│   │   │   │   ├── route.ts               # GET posts, POST post
-│   │   │   │   └── [id]/route.ts          # GET/PUT/DELETE post
-│   │   │   ├── categories/route.ts
-│   │   │   ├── tags/route.ts
-│   │   │   ├── users/route.ts
-│   │   │   ├── media/
-│   │   │   │   └── upload/route.ts
-│   │   │   └── settings/route.ts
-│   │   │
-│   │   ├── sitemap.ts                     # SEO: sitemap
-│   │   ├── robots.ts                      # SEO: robots.txt
-│   │   └── globals.css
-│   │
-│   ├── components/
-│   │   ├── ui/                            # shadcn/MUI wrappers
-│   │   ├── layout/
-│   │   │   ├── PublicHeader.tsx
-│   │   │   ├── PublicFooter.tsx
-│   │   │   ├── AdminSidebar.tsx
-│   │   │   └── AdminTopbar.tsx
-│   │   ├── blog/
-│   │   │   ├── PostCard.tsx
-│   │   │   ├── PostGrid.tsx
-│   │   │   ├── PostContent.tsx
-│   │   │   └── AuthorBox.tsx
-│   │   └── admin/
-│   │       ├── PostEditor.tsx             # rich text editor component
-│   │       ├── PostTable.tsx
-│   │       ├── MediaUploader.tsx
-│   │       └── SettingsForm.tsx
-│   │
-│   ├── lib/
-│   │   ├── db/
-│   │   │   ├── connect.ts                 # DB connection
-│   │   │   └── migrations/                # optional
-│   │   ├── auth/
-│   │   │   ├── auth.ts                    # session/auth logic
-│   │   │   ├── jwt.ts
-│   │   │   └── middleware.ts
-│   │   ├── validators/
-│   │   │   ├── post.schema.ts             # zod validations
-│   │   │   ├── user.schema.ts
-│   │   │   └── settings.schema.ts
-│   │   ├── utils/
-│   │   │   ├── slug.ts
-│   │   │   ├── seo.ts
-│   │   │   └── date.ts
-│   │   └── constants.ts
-│   │
-│   ├── services/
-│   │   ├── post.service.ts                # business logic
-│   │   ├── category.service.ts
-│   │   ├── tag.service.ts
-│   │   ├── user.service.ts
-│   │   └── media.service.ts
-│   │
-│   ├── models/                            # DB Models (Prisma/Mongoose/etc.)
-│   │   ├── Post.ts
-│   │   ├── Category.ts
-│   │   ├── Tag.ts
-│   │   ├── User.ts
-│   │   └── Settings.ts
-│   │
-│   ├── types/
-│   │   ├── post.ts
-│   │   ├── user.ts
-│   │   └── common.ts
-│   │
-│   └── middleware.ts                      # Next middleware (auth + route protection)
+.(app)
+│   favicon.ico
+│   globals.css
+│   layout.tsx
+│   page.tsx
+│   providers.tsx
+│   sitemap.ts
 │
-├── public/
-│   ├── images/
-│   ├── uploads/                           # if local media storage
-│   └── favicon.ico
+├───(admin)
+│   │   layout.tsx
+│   │
+│   └───admin
+│       │   page.tsx
+│       │
+│       ├───categories
+│       │       page.tsx
+│       │
+│       ├───dashboard
+│       │       page.tsx
+│       │
+│       ├───media
+│       │       page.tsx
+│       │
+│       ├───posts
+│       │   │   page.tsx
+│       │   │
+│       │   ├───drafts
+│       │   │       page.tsx
+│       │   │
+│       │   ├───new
+│       │   │       page.tsx
+│       │   │
+│       │   └───[id]
+│       │       └───edit
+│       │               page.tsx
+│       │
+│       ├───search
+│       │       page.tsx
+│       │       SearchClient.tsx
+│       │
+│       ├───tags
+│       │       page.tsx
+│       │
+│       └───users
+│           └───page.tsx
+├───(auth)
+│   │   layout.tsx
+│   │
+│   └───admin
+│       └───login
+│               page.tsx
 │
-├── prisma/                                # only if using Prisma
-│   ├── schema.prisma
-│   └── seed.ts
+├───(public)
+│   │   layout.tsx
+│   │
+│   └───blog
+│       │   page.tsx
+│       │
+│       ├───category
+│       │   └───[slug]
+│       │           page.tsx
+│       │
+│       ├───latest
+│       │       page.tsx
+│       │
+│       ├───tag
+│       │   └───[slug]
+│       │           page.tsx
+│       │
+│       └───[slug]
+│               page.tsx
 │
-├── .env.local
-├── next.config.js
-├── package.json
-├── tsconfig.json
-└── README.md
+├───api
+│   ├───admin
+│   │   └───search
+│   │           route.ts
+│   │
+│   ├───auth
+│   │   ├───login
+│   │   │       route.ts
+│   │   │
+│   │   ├───logout
+│   │   │       route.ts
+│   │   │
+│   │   └───me
+│   │           route.ts
+│   │
+│   ├───categories
+│   │   │   route.ts
+│   │   │
+│   │   └───[id]
+│   │           route.ts
+│   │
+│   ├───media
+│   │   │   route.ts
+│   │   │
+│   │   ├───upload
+│   │   │       route.ts
+│   │   │
+│   │   └───[id]
+│   │           route.ts
+│   │
+│   ├───posts
+│   │   │   route.ts
+│   │   │
+│   │   ├───latest
+│   │   │       route.ts
+│   │   │
+│   │   └───[id]
+│   │       │   route.ts
+│   │       │
+│   │       ├───publish
+│   │       │       route.ts
+│   │       │
+│   │       └───unpublish
+│   │               route.ts
+│   │
+│   ├───public
+│   │   │   route.ts
+│   │   │
+│   │   ├───categories
+│   │   │   │   route.ts
+│   │   │   │
+│   │   │   └───[slug]
+│   │   │       └───posts
+│   │   │               route.ts
+│   │   │
+│   │   ├───posts
+│   │   │   │   route.ts
+│   │   │   │
+│   │   │   └───[slug]
+│   │   │           route.ts
+│   │   │
+│   │   └───tags
+│   │       │   route.ts
+│   │       │
+│   │       └───[slug]
+│   │           └───post
+│   │                   route.ts
+│   │
+│   └───tags
+│       │   route.ts
+│       │
+│       └───[id]
+│               route.ts
+│
+├───components
+│   ├───admin
+│   │   ├───Category
+│   │   │       CategoryDialog.tsx
+│   │   │
+│   │   ├───common
+│   │   │       AdminShell.tsx
+│   │   │       ConfirmDialouge.tsx
+│   │   │       Sidebar.tsx
+│   │   │       TipTapEditor.tsx
+│   │   │       Topbar.tsx
+│   │   │
+│   │   ├───media
+│   │   │       MediaGrid.tsx
+│   │   │       MediaUploader.tsx
+│   │   │
+│   │   ├───posts
+│   │   │       AppFlowEditor.tsx
+│   │   │       MediaPickerDialog.tsx
+│   │   │       PostForm.tsx
+│   │   │
+│   │   └───tags
+│   │           TagDialog.tsx
+│   │
+│   ├───blog
+│   │       AuthorBox.tsx
+│   │       BlogNavbar.tsx
+│   │       PostCard.tsx
+│   │       PostContent.tsx
+│   │       PostGrid.tsx
+│   │       PostList.tsx
+│   │       PublicFooter.tsx
+│   │       PublicNavbar.tsx
+│   │       SidebarWidgets.tsx
+│   │
+│   ├───layout
+│   │       ThemeRegistry.tsx
+│   │
+│   └───ui
+├───lib
+│   │   guard.ts
+│   │   http.ts
+│   │   response.ts
+│   │
+│   ├───auth
+│   │       auth.ts
+│   │       cookies.ts
+│   │       jwt.ts
+│   │       middleware.ts
+│   │       password.ts
+│   │
+│   ├───db
+│   │       connect.ts
+│   │
+│   ├───utils
+│   │       baseUrl.ts
+│   │       blogformat.ts
+│   │       seo.ts
+│   │       slug.ts
+│   │
+│   └───validators
+│           category.schema.ts
+│           post.schema.ts
+│           tag.schema.ts
+│           user.schema.ts
+│
+├───models
+│       Category.ts
+│       Media.ts
+│       Post.ts
+│       Tag.ts
+│       User.ts
+│
+├───services
+│       category.service.ts
+│       media.service.ts
+│       post.service.ts
+│       tag.service.ts
+│       user.service.ts
+│
+└───types
+        post.ts
+
+
