@@ -32,7 +32,7 @@ export async function POST(_: Request, ctx: Ctx) {
 
       if (emails.length > 0) {
         await resend.emails.send({
-          from: 'Arihant Blog <newsletter@arihant.com>',
+          from: 'Arihant Blog <onboarding@resend.dev>',
           to: emails,
           subject: `New Post: ${updated.title}`,
           html: `
