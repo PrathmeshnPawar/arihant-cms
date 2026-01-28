@@ -12,6 +12,7 @@ import { Post } from "@/app/models/Post";
 import "@/app/models/Media";
 import "@/app/models/Category";
 import "@/app/models/Tag";
+import ShareButtons from "@/app/components/blog/ShareButtons";
 
 export const dynamic = "force-dynamic";
 
@@ -77,6 +78,9 @@ export default async function BlogPostPage({
 
   const post = json.data;
   const cover = post.coverImage?.url || "";
+  const baseUrl = getBaseUrl();
+// This ensures no double slashes regardless of how baseUrl is formatted
+const currentUrl = `${baseUrl.replace(/\/$/, "")}/blog/${slug}`;
 
   return (
     <Box>
@@ -230,6 +234,9 @@ export default async function BlogPostPage({
           }}
           dangerouslySetInnerHTML={{ __html: post.content }}
         />
+          {/* SHARE FEATURE SECTION */}
+        <ShareButtons url={currentUrl} title={post.title} />
+
 
         {/* Footer */}
         <Divider sx={{ my: 6 }} />
