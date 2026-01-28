@@ -21,8 +21,8 @@ export const dynamic = "force-dynamic";
 async function getPosts() {
   try {
     const baseUrl = await getBaseUrl();
-    const res = await fetch(`${baseUrl}/api/public/posts?limit=20`, { 
-      cache: "no-store" 
+    const res = await fetch(`${baseUrl}/api/public/posts?limit=20`, {
+      cache: "no-store"
     });
     return res.ok ? res.json() : { data: { posts: [] } };
   } catch {
@@ -37,19 +37,41 @@ const clamp = (lines: number) => ({
   WebkitBoxOrient: "vertical" as const,
 });
 
-const SectionHeader = ({ title }: { title: string }) => (
-  <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3, mt: 5 }}>
+const SectionHeader = ({
+  title,
+  href,
+}: {
+  title: string;
+  href?: string;
+}) => (
+  <Stack
+    direction="row"
+    justifyContent="space-between"
+    alignItems="center"
+    sx={{ mb: 3, mt: 5 }}
+  >
     <Typography variant="h5" fontWeight={900} color="#020617">
       {title}
     </Typography>
-    <Button
-      endIcon={<ArrowForwardIcon fontSize="small" />}
-      sx={{ fontWeight: 700, textTransform: "none", color: "text.secondary" }}
-    >
-      View All
-    </Button>
+
+    {href && (
+      <Link href={href} style={{ textDecoration: "none" }}>
+        <Button
+          endIcon={<ArrowForwardIcon fontSize="small" />}
+          sx={{
+            fontWeight: 700,
+            textTransform: "none",
+            color: "text.secondary",
+          }}
+        >
+          View All
+        </Button>
+      </Link>
+    )}
   </Stack>
 );
+
+
 
 export default async function BlogPage() {
   const json = await getPosts();
@@ -124,7 +146,7 @@ export default async function BlogPage() {
       </Grid>
 
       {/* ===== LATEST STORIES ROW ===== */}
-      <SectionHeader title="Latest Stories" />
+      <SectionHeader title="Latest Stories" href="/blog/latest" />
       <Grid container spacing={3}>
         {latestStories.map((p: any) => (
           <Grid size={{ xs: 12, sm: 4 }} key={p._id}>
