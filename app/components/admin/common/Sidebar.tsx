@@ -26,7 +26,7 @@ const nav = [
   { label: "Categories", href: "/admin/categories", icon: <CategoryIcon /> },
   { label: "Tags", href: "/admin/tags", icon: <TagIcon /> },
   { label: "Media", href: "/admin/media", icon: <ImageIcon /> },
-  { label: "Users", href: "/admin/users", icon: <PeopleIcon /> },
+ // { label: "Users", href: "/admin/users", icon: <PeopleIcon /> },
   { label: "Drafts", href: "/admin/posts/drafts", icon: <Drafts /> },
 ];
 
