@@ -22,7 +22,7 @@ import MediaPickerDialog from "./MediaPickerDialog";
 export type AppFlowStep = {
   title: string;
   description?: string;
-  mediaId?: string;
+  media?: string;
   imageUrl?: string;
 };
 
@@ -38,7 +38,7 @@ export default function AppFlowEditor({ value, onChange }: Props) {
   function addStep() {
     onChange([
       ...value,
-      { title: "", description: "", mediaId: "", imageUrl: "" },
+      { title: "", description: "", media: "", imageUrl: "" },
     ]);
   }
 
@@ -146,7 +146,7 @@ export default function AppFlowEditor({ value, onChange }: Props) {
         onClose={() => setPickerOpen(false)}
         onSelect={(m) => {
           if (activeIndex !== null) {
-            updateStep(activeIndex, { mediaId: m._id, imageUrl: m.url });
+            updateStep(activeIndex, { media: m._id, imageUrl: m.url });
           }
           setPickerOpen(false);
         }}

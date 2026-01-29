@@ -27,6 +27,7 @@ export async function GET(req: Request) {
         .limit(limit)
         .populate("category", "name slug")
         .populate("coverImage", "url")
+        .populate('appFlow.media')
         .lean(),
 
       Post.countDocuments({

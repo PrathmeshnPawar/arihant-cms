@@ -230,7 +230,13 @@ export default function PostForm({ mode, initialValues, postId }: Props) {
           }
         : undefined,
 
-      appFlow: values.appFlow || [],
+     appFlow: (values.appFlow || []).map((step: any) => ({
+    title: step.title || "",
+    description: step.description || "",
+    imageUrl: step.imageUrl || "",
+    // ✅ MAP mediaId from UI to media for DB
+    media: step.mediaId || step.media || null, 
+  })),
     };
 
     console.log("🚀 FINAL PAYLOAD:", payload); // remove later
@@ -240,7 +246,7 @@ export default function PostForm({ mode, initialValues, postId }: Props) {
       : `/api/posts/${postId}`;
 
     const res = await fetch(url, {
-      method: mode === "create" ? "POST" : "PUT",
+      method: mode === "create" ? "POST" : "PATCH",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),

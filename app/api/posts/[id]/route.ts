@@ -58,3 +58,35 @@ export async function DELETE(_: Request, ctx: Ctx) {
     return fail("Failed to delete post", 500, err?.message);
   }
 }
+/**
+ * PATCH /api/posts/[id]
+ * Updates an existing post using ID or Slug
+ */
+export async function PATCH(req: Request, ctx: Ctx) {
+  try {
+    await requireAdmin();
+    await connectDB();
+
+    const { id } = await ctx.params;
+    const body = await req.json(); // Gets the data from your PostForm
+
+    // Calls your PostService.update logic
+    const updated = await PostService.update(id, body);
+
+    if (!updated) {
+      return fail("Post not found", 404);
+    }
+
+    // ✅ Crucial: This returns the JSON body your frontend is looking for
+    return ok(updated, "Post updated successfully");
+
+  } catch (err: any) {
+    if (err?.message === "UNAUTHORIZED") return fail("Unauthorized", 401);
+    
+    console.error("💥 PATCH ERROR:", err);
+    // Returning a fail() ensures JSON is sent even on error, 
+    // preventing the "Unexpected end of JSON" crash.
+    return fail("Failed to update post", 500, err?.message);
+  }
+}
+

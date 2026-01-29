@@ -26,6 +26,7 @@ async function getPost(slug: string) {
       .populate('coverImage', 'url originalName mimeType')
       .populate('gallery', 'url originalName mimeType')
       .populate('seo.ogImage', 'url originalName mimeType')
+      .populate('appFlow.media', 'url originalName mimeType')
       .lean()
 
     if (!post) return null
@@ -238,6 +239,69 @@ export default async function BlogPostPage({
           }}
           dangerouslySetInnerHTML={{ __html: post.content }}
         />
+        {/* ✅ PASTE START: MOBILE APP FLOW SECTION */}
+        {post.appFlow && post.appFlow.length > 0 && (
+          <Box sx={{ mt: 8, mb: 6 }}>
+            <Typography variant="h4" fontWeight={950} sx={{ mb: 4, letterSpacing: -0.5 }}>
+              Step-by-Step App Guide
+            </Typography>
+            
+            <Stack spacing={4}>
+              {post.appFlow.map((step: any, idx: number) => (
+                <Paper 
+                  key={idx} 
+                  elevation={0} 
+                  sx={{ 
+                    p: { xs: 2, md: 4 }, 
+                    borderRadius: 5, 
+                    bgcolor: '#f8fafc',
+                    border: '1px solid #e2e8f0',
+                    display: 'flex',
+                    flexDirection: { xs: 'column', md: 'row' },
+                    gap: 4,
+                    alignItems: 'center'
+                  }}
+                >
+                  {/* Step Image (Phone UI look) */}
+                  {(step.imageUrl || step.media?.url) && (
+                    <Box 
+                      component="img"
+                      src={step.imageUrl || step.media?.url}
+                      alt={step.title}
+                      sx={{ 
+                        width: { xs: '100%', md: 220 }, 
+                        height: 'auto',
+                        borderRadius: 4,
+                        objectFit: 'cover',
+                        boxShadow: '0 20px 50px rgba(0,0,0,0.1)',
+                        border: '4px solid #fff'
+                      }}
+                    />
+                  )}
+
+                  {/* Step Description */}
+                  <Box sx={{ flex: 1 }}>
+                    <Typography 
+                      variant="overline" 
+                      fontWeight={900} 
+                      color="primary.main" 
+                      sx={{ display: 'block', mb: 1 }}
+                    >
+                      Step {idx + 1}
+                    </Typography>
+                    <Typography variant="h5" fontWeight={900} sx={{ mb: 2 }}>
+                      {step.title}
+                    </Typography>
+                    <Typography variant="body1" sx={{ color: 'text.secondary', lineHeight: 1.8, fontSize: 16 }}>
+                      {step.description}
+                    </Typography>
+                  </Box>
+                </Paper>
+              ))}
+            </Stack>
+          </Box>
+        )}
+        {/* ✅ PASTE END */}
         {/* SHARE FEATURE SECTION */}
         <ShareButtons url={currentUrl} title={post.title} />
 
