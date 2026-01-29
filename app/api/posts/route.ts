@@ -5,7 +5,7 @@ import { createPostSchema } from '@/app/lib/validators/post.schema'
 import { PostService } from '@/app/services/post.service'
 
 import { Post } from '@/app/models/Post'
-
+export const dynamic = "force-dynamic";
 // ✅ register referenced models (for populate)
 import '@/app/models/Media'
 import '@/app/models/Category'

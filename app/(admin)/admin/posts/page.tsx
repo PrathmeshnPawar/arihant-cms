@@ -74,7 +74,7 @@ export default function PostsPage() {
     setLoading(false);
   }
 }
-
+  
 
   React.useEffect(() => {
     fetchPosts();

@@ -135,10 +135,16 @@ export default function DraftPostsPage() {
 
       const json = await res.json();
 
-      if (!res.ok) {
-        toast("error", json?.message || "Publish failed");
-        return;
-      }
+      if (res.ok) {
+      toast("success", "Post Published Successfully!");
+      
+      // ✅ RE-FETCH the list immediately
+      // This removes the published post from the 'Drafts' table
+      await fetchPostsAndFilterDrafts(); 
+    } else {
+      const errorData = await res.json();
+      toast("error", errorData.message || "Failed to publish");
+    }
 
       toast("success", "Post published ✅");
       await fetchPostsAndFilterDrafts();
