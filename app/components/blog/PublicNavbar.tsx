@@ -46,7 +46,7 @@ export default function PublicTopbar() {
                   fontSize: { xs: "1.25rem", md: "1.6rem" }
                 }}
               >
-                Arihant <Box component="span" sx={{ color: "primary.main", ml: 0.8 }}>Blog</Box>
+                Arihant <Box component="span" sx={{ color: "#34b350", ml: 0.8 }}>Blog</Box>
               </Typography>
             </Link>
 

@@ -161,6 +161,39 @@ export default async function BlogPostPage({
 
       {/* ===== ARTICLE BODY ===== */}
       <Box sx={{ maxWidth: 820, mx: 'auto' }}>
+        <Box sx={{ mb: 3 }}>
+          <Stack direction="row" alignItems="center" spacing={1} sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+            <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>Home</Link>
+            <Typography variant="caption" sx={{ opacity: 0.5 }}>{">"}</Typography>
+            
+            <Link href="/blog" style={{ textDecoration: 'none', color: 'inherit' }}>Blog</Link>
+            <Typography variant="caption" sx={{ opacity: 0.5 }}>{">"}</Typography>
+
+            {post.category?.name && (
+              <>
+                <Link href={`/blog/category/${post.category.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                  {post.category.name}
+                </Link>
+                <Typography variant="caption" sx={{ opacity: 0.5 }}>{">"}</Typography>
+              </>
+            )}
+
+            <Typography 
+              variant="caption" 
+              sx={{ 
+                color: 'text.primary', 
+                fontWeight: 600,
+                display: '-webkit-box',
+                WebkitLineClamp: 1,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden'
+              }}
+            >
+              {post.title}
+            </Typography>
+          </Stack>
+        </Box>
+        {/* ✅ BREADCRUMB MAP END */}
         {/* Tags */}
         <Box sx={{ mb: 3, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
           {(post.tags || []).map((t: any) => (
