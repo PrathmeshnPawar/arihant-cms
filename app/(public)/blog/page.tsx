@@ -15,6 +15,7 @@ import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { connectDB } from "@/app/lib/db/connect";
 import { Post } from "@/app/models/Post";
 import { formatDate, readingTime } from "../../lib/utils/blogformat";
+import { Category } from "@/app/models/Category";
 
 // Model registration to ensure .populate() works correctly
 import "@/app/models/Media";
@@ -70,6 +71,7 @@ export default async function BlogPage() {
     .populate("coverImage", "url")
     .lean();
 
+    const categories = await Category.find().sort({ name: 1 }).lean();
   if (!posts || posts.length === 0) {
     return (
       <Container sx={{ py: 8, textAlign: "center" }}>
@@ -198,6 +200,42 @@ export default async function BlogPage() {
           </Grid>
         ))}
       </Grid>
+      <SectionHeader title="Browse by Category" />
+      
+      <Box sx={{ mb: 6 }}>
+        <Grid container spacing={2}>
+          {categories.map((cat: any) => (
+            <Grid size={{ xs: 6, sm: 4, md: 2.4 }} key={cat._id.toString()}>
+              <Link href={`/blog/category/${cat.slug}`} style={{ textDecoration: 'none' }}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 2.5,
+                    textAlign: 'center',
+                    borderRadius: 3,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    transition: 'all 0.2s ease-in-out',
+                    bgcolor: '#f8fafc',
+                    cursor: 'pointer',
+                    '&:hover': { 
+                      bgcolor: 'primary.main', 
+                      color: '#fff',
+                      borderColor: 'primary.main',
+                      transform: 'translateY(-4px)',
+                      boxShadow: '0 10px 20px rgba(0,0,0,0.05)'
+                    }
+                  }}
+                >
+                  <Typography variant="subtitle2" fontWeight={800} sx={{ fontSize: '0.85rem' }}>
+                    {cat.name}
+                  </Typography>
+                </Paper>
+              </Link>
+            </Grid>
+          ))}
+        </Grid>
+      </Box>
     </Container>
   );
 }

@@ -62,6 +62,21 @@ export default function Loading() {
           </Grid>
         ))}
       </Grid>
+      {/* Header for Categories */}
+<Skeleton variant="text" width={200} height={40} sx={{ mt: 5, mb: 3 }} />
+
+{/* Category Boxes Skeleton */}
+<Grid container spacing={2} sx={{ mb: 6 }}>
+  {[1, 2, 3, 4, 5].map((i) => (
+    <Grid size={{ xs: 6, sm: 4, md: 2.4 }} key={i}>
+      <Skeleton 
+        variant="rounded" 
+        height={70} 
+        sx={{ borderRadius: 3, bgcolor: 'rgba(0,0,0,0.03)' }} 
+      />
+    </Grid>
+  ))}
+</Grid>
     </Container>
   );
 }
