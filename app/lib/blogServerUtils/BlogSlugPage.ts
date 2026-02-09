@@ -4,6 +4,7 @@ import { connectDB } from "../db/connect";
 export const getBlogPage = async (slug: string) => {
   try {
     await connectDB();
+
     const post = await Post.findOne({ slug, status: "published" })
       .populate("category", "name slug")
       .populate("tags", "name slug")

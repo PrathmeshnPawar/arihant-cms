@@ -13,7 +13,7 @@ import "@/app/models/Media";
 import "@/app/models/Category";
 import "@/app/models/Tag";
 
-export const dynamic = "force-dynamic";
+//export const dynamic = "force-dynamic";
 
 // 2. The getPost function
 
@@ -22,9 +22,9 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const { slug } = params;
+  const { slug } = await params;
 
   const json = await getBlogPage(slug);
 
@@ -45,9 +45,9 @@ export async function generateMetadata({
 export default async function BlogPostPage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
-  const { slug } = params;
+  const { slug } = await params;
   const json = await getBlogPage(slug);
 
   if (!json?.success) {

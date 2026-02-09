@@ -21,7 +21,7 @@ import "@/app/models/Media";
 import "@/app/models/Category";
 import "@/app/models/Tag";
 
-export const dynamic = "force-dynamic";
+//export const dynamic = "force-dynamic";
 
 const clamp = (lines: number) => ({
   overflow: "hidden",

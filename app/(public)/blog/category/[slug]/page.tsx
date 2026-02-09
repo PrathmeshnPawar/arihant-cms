@@ -8,7 +8,7 @@ import { getCategoryPosts } from "@/app/lib/blogServerUtils/CategoryPage";
 import "@/app/models/Media";
 import "@/app/models/Tag";
 
-export const dynamic = "force-dynamic";
+//export const dynamic = "force-dynamic";
 
 export default async function CategoryArchivePage({
   params,
