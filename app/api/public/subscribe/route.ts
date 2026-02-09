@@ -19,3 +19,4 @@ export async function POST(req: Request) {
     return fail("Failed to subscribe", 500, err.message);
   }
 }
+

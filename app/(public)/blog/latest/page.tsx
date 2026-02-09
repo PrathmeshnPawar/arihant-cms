@@ -1,16 +1,8 @@
 import Link from "next/link";
-import {
-  Box,
-  Typography,
-  Container,
-  Paper,
-  Chip,
-} from "@mui/material";
+import { Box, Typography, Container, Paper, Chip } from "@mui/material";
 
-// Core logic and database imports
-import { connectDB } from "@/app/lib/db/connect";
-import { Post } from "@/app/models/Post";
 import { formatDate, readingTime } from "@/app/lib/utils/blogformat";
+import { getLatestPosts } from "../../../lib/blogServerUtils/LatestPage";
 
 // Register referenced models to ensure .populate() works correctly
 import "@/app/models/Media";
@@ -22,21 +14,7 @@ export const dynamic = "force-dynamic";
 export default async function LatestStoriesPage() {
   // 1. DIRECT DATABASE ACCESS
   // Connect and query directly to avoid internal network timeouts (UND_ERR_CONNECT_TIMEOUT).
-  await connectDB();
-
-  // Calculate the date 30 days ago to match your previous 'days=30' logic
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-  const posts = await Post.find({
-    status: "published",
-    publishedAt: { $gte: thirtyDaysAgo },
-  })
-    .sort({ publishedAt: -1 })
-    .limit(12)
-    .populate("category", "name slug")
-    .populate("coverImage", "url")
-    .lean();
+  const { posts } = await getLatestPosts();
 
   return (
     <Container maxWidth="lg" sx={{ py: 5 }}>
@@ -45,7 +23,9 @@ export default async function LatestStoriesPage() {
       </Typography>
 
       {!posts || posts.length === 0 ? (
-        <Typography color="text.secondary">No stories found from the last 30 days.</Typography>
+        <Typography color="text.secondary">
+          No stories found from the last 30 days.
+        </Typography>
       ) : (
         <Box
           sx={{
@@ -69,11 +49,11 @@ export default async function LatestStoriesPage() {
                 sx={{
                   borderRadius: 3,
                   overflow: "hidden",
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  height: '100%',
-                  transition: 'transform 0.2s',
-                  '&:hover': { transform: 'translateY(-4px)' }
+                  border: "1px solid",
+                  borderColor: "divider",
+                  height: "100%",
+                  transition: "transform 0.2s",
+                  "&:hover": { transform: "translateY(-4px)" },
                 }}
               >
                 <Box
@@ -82,7 +62,7 @@ export default async function LatestStoriesPage() {
                     backgroundImage: `url(${p.coverImage?.url || ""})`,
                     backgroundSize: "cover",
                     backgroundPosition: "center",
-                    backgroundColor: 'grey.100'
+                    backgroundColor: "grey.100",
                   }}
                 />
                 <Box sx={{ p: 2 }}>
@@ -93,11 +73,17 @@ export default async function LatestStoriesPage() {
                     color="primary"
                     variant="outlined"
                   />
-                  <Typography variant="subtitle1" fontWeight={800} color="text.primary" sx={{ lineHeight: 1.3, mb: 1 }}>
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight={800}
+                    color="text.primary"
+                    sx={{ lineHeight: 1.3, mb: 1 }}
+                  >
                     {p.title}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    {readingTime(p.content || "")} • {formatDate(p.publishedAt || p.createdAt)}
+                    {readingTime(p.content || "")} •{" "}
+                    {formatDate(p.publishedAt || p.createdAt)}
                   </Typography>
                 </Box>
               </Paper>
